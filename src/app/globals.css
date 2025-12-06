@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-vazir: "Vazirmatn", system-ui, sans-serif;
+}
+
+body {
+  /* اضافه کردن کلاس select-none برای غیرفعال کردن انتخاب متن */
+  @apply bg-[#0f172a] text-white font-sans antialiased overflow-x-hidden select-none;
+}
+
+/* خیلی مهم: انتخاب متن را برای اینپوت‌ها و تکست‌اریاها فعال نگه دارید تا کاربر بتواند تایپ/ویرایش کند */
+input,
+textarea {
+  @apply select-text;
+}
+
+/* اسکرول بار سفارشی */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-[#0f172a];
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-[#334155] rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-cyan-500;
+}

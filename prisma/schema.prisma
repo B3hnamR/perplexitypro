@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id        String   @id @default(cuid())
+  firstName String?
+  lastName  String?
+  mobile    String   @unique
+  email     String?
+  role      String   @default("USER")
+  orders    Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OTP {
+  id        String   @id @default(cuid())
+  mobile    String   @unique
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String   @db.Text
+  price       Float
+  fileUrl     String?
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Order {
+  id            String   @id @default(cuid())
+  refId         String?  @unique
+  trackingCode  String?  @unique
+  amount        Float
+  originalAmount Float?  // مبلغ قبل از تخفیف
+  quantity      Int      @default(1)
+  status        String   @default("PENDING")
+  
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id])
+  
+  customerEmail String?
+  customerPhone String?
+  
+  downloadToken String?  @unique
+  downloadCount Int      @default(0)
+  customData    String?  @db.Text
+  
+  // ارتباط با کد تخفیف
+  discountCodeId String?
+  discountCode   DiscountCode? @relation(fields: [discountCodeId], references: [id])
+  
+  links         DownloadLink[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([discountCodeId])
+}
+
+model DiscountCode {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  type          String   // "PERCENTAGE" or "FIXED"
+  value         Float
+  
+  minOrderPrice Float?
+  maxDiscount   Float?
+  maxUses       Int?     // سقف کل استفاده (برای همه)
+  maxUsesPerUser Int?    // ✅ فیلد جدید: سقف استفاده برای هر نفر
+  usedCount     Int      @default(0)
+  expiresAt     DateTime?
+  isActive      Boolean  @default(true)
+  
+  orders        Order[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model DownloadLink {
+  id         String   @id @default(cuid())
+  url        String   @db.Text
+  status     String   @default("AVAILABLE")
+  
+  orderId    String?
+  order      Order?   @relation(fields: [orderId], references: [id])
+  
+  consumedAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  @@index([orderId])
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  adminEmail String
+  action    String   // مثلا: "CREATE_PRODUCT", "UPDATE_ORDER"
+  details   String?
+  createdAt DateTime @default(now())
+}
