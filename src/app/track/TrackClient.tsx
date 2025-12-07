@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import { Search, Lock, ArrowRight, Loader2, AlertCircle } from "lucide-react";
-import Navbar from "@/components/Navbar";
-import DeliveryClient from "../delivery/[token]/DeliveryClient";
+import DeliveryClient from "../delivery/[token]/DeliveryClient"; 
 
 export default function TrackClient() {
-    const [step, setStep] = useState(1);
+    const [step, setStep] = useState(1); 
     const [trackingCode, setTrackingCode] = useState("");
     const [mobileMasked, setMobileMasked] = useState("");
     const [otp, setOtp] = useState("");
@@ -62,8 +61,7 @@ export default function TrackClient() {
 
     return (
         <main className="min-h-screen bg-[#0f172a] font-sans text-white">
-            <Navbar onPreOrder={() => { }} />
-
+            
             <div className="pt-32 pb-20 max-w-xl mx-auto px-4">
                 <div className="text-center mb-10">
                     <h1 className="text-3xl font-black mb-4">پیگیری امن سفارش</h1>
@@ -96,7 +94,7 @@ export default function TrackClient() {
                                 <p className="text-sm text-cyan-300 mb-2">کد تایید به شماره زیر ارسال شد:</p>
                                 <p className="text-xl font-bold font-mono text-white" dir="ltr">{mobileMasked}</p>
                             </div>
-
+                            
                             <div className="relative group">
                                 <input
                                     type="text"

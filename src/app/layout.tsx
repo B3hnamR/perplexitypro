@@ -2,10 +2,11 @@ import type { Metadata, Viewport } from "next";
 import { Vazirmatn } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
-import NotificationSystem from "@/components/NotificationSystem"; // ✅
-import MaintenanceScreen from "@/components/MaintenanceScreen"; // ✅
+import NotificationSystem from "@/components/NotificationSystem";
+import MaintenanceScreen from "@/components/MaintenanceScreen";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import Navbar from "@/components/Navbar"; // ✅ ایمپورت شد
 
 const vazirmatn = Vazirmatn({ 
   subsets: ["arabic", "latin"],
@@ -41,11 +42,9 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // ✅ بررسی حالت تعمیرات در سمت سرور
   const maintenanceSetting = await prisma.setting.findUnique({ where: { key: "maintenance_mode" } });
   const isMaintenance = maintenanceSetting?.value === "true";
   
-  // ✅ چک کردن اینکه آیا کاربر ادمین است؟ (ادمین نباید پشت صفحه تعمیرات بماند)
   const session = await auth();
   const isAdmin = (session?.user as any)?.role === "ADMIN";
 
@@ -54,13 +53,12 @@ export default async function RootLayout({
       <body className={`${vazirmatn.variable} font-sans bg-[#0f172a] text-white antialiased selection:bg-cyan-500/30 selection:text-cyan-200`} suppressHydrationWarning>
         <Providers>
           
-          {/* اگر حالت تعمیرات فعال بود و کاربر ادمین نبود، فقط صفحه تعمیرات را نشان بده */}
           {isMaintenance && !isAdmin ? (
              <MaintenanceScreen />
           ) : (
              <>
-                {/* سیستم اعلانات فقط وقتی سایت فعال است نمایش داده شود */}
                 <NotificationSystem />
+                <Navbar /> {/* ✅ اینجا اضافه شد تا در همه صفحات باشد */}
                 {children}
              </>
           )}

@@ -1,14 +1,13 @@
 "use client";
 
 import CheckoutModal from "@/components/CheckoutModal";
-import Navbar from "@/components/Navbar";
 import { useCart } from "@/context/CartContext";
 import {
     ArrowLeft, ArrowRight, Minus, Plus, ShoppingBag, Trash2, ShieldCheck, Ticket, X, Loader2
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import Image from "next/image"; // ✅ اضافه شده برای سئو
+import Image from "next/image";
 
 export default function CartClient() {
     const { items, removeItem, updateQuantity, total, subtotal, count, discount, applyDiscount, addItem } = useCart();
@@ -34,7 +33,7 @@ export default function CartClient() {
 
             if (res.ok) {
                 applyDiscount(data);
-                setCouponCode("");
+                setCouponCode(""); 
             } else {
                 setCouponError(data.error);
             }
@@ -49,22 +48,10 @@ export default function CartClient() {
         applyDiscount(null);
         setCouponError("");
     };
-
-    const handlePreOrder = () => {
-        if (items.length === 0) {
-            addItem({
-                id: "perplexity-pro-1year",
-                name: "Perplexity Pro Subscription",
-                price: 398000
-            });
-        }
-        setIsCheckoutOpen(true);
-    };
-
+    
     return (
         <main className="min-h-screen bg-[#0f172a] text-white pb-20 font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
-            <Navbar onPreOrder={handlePreOrder} />
-
+            
             <div className="pt-32 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 animate-fade-in">
@@ -77,7 +64,7 @@ export default function CartClient() {
                             محصولات انتخابی خود را مرور کنید. با نهایی کردن سفارش، لایسنس به صورت آنی برای شما صادر می‌شود.
                         </p>
                     </div>
-
+                    
                     <div className="flex items-center gap-3 bg-[#1e293b]/50 border border-white/5 px-4 py-3 rounded-xl backdrop-blur-sm">
                         <ShieldCheck className="text-emerald-400" size={20} />
                         <div className="flex flex-col text-xs text-gray-400">
@@ -103,10 +90,9 @@ export default function CartClient() {
                                 {items.map((item) => (
                                     <div key={item.id} className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-white/5 last:border-0 last:pb-0">
                                         <div className="w-20 h-20 bg-gradient-to-br from-cyan-500/10 to-blue-600/10 rounded-xl border border-white/10 flex items-center justify-center flex-shrink-0 relative overflow-hidden">
-                                            {/* ✅ استفاده از Image به جای img */}
-                                            <Image
-                                                src="/perplexity-pro-logo.png"
-                                                alt={item.name}
+                                            <Image 
+                                                src="/perplexity-pro-logo.png" 
+                                                alt={item.name} 
                                                 fill
                                                 className="object-contain opacity-90 p-2"
                                             />
@@ -118,12 +104,12 @@ export default function CartClient() {
                                         </div>
                                         <div className="flex items-center gap-4">
                                             <div className="flex items-center bg-[#0f172a] rounded-lg border border-white/10 p-1">
-                                                <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white"><Plus size={14} /></button>
+                                                <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white"><Plus size={14}/></button>
                                                 <span className="w-8 text-center font-bold text-sm">{item.quantity}</span>
-                                                <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white" disabled={item.quantity <= 1}><Minus size={14} /></button>
+                                                <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white" disabled={item.quantity <= 1}><Minus size={14}/></button>
                                             </div>
                                             <div className="hidden sm:block font-bold text-lg text-white min-w-[120px] text-left pl-4">{formatPrice(item.price * item.quantity)} <span className="text-sm text-gray-500 font-normal">ت</span></div>
-                                            <button onClick={() => removeItem(item.id)} className="text-red-400 hover:bg-red-500/10 p-2 rounded-xl"><Trash2 size={18} /></button>
+                                            <button onClick={() => removeItem(item.id)} className="text-red-400 hover:bg-red-500/10 p-2 rounded-xl"><Trash2 size={18}/></button>
                                         </div>
                                     </div>
                                 ))}
@@ -133,25 +119,25 @@ export default function CartClient() {
                         {/* Summary */}
                         <div className="lg:col-span-1 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
                             <div className="bg-[#1e293b] border border-white/10 rounded-2xl p-6 sticky top-24 shadow-xl">
-
+                                
                                 {/* Coupon Section */}
                                 <div className="mb-6">
                                     {!discount ? (
                                         <div className="relative">
-                                            <input
-                                                type="text"
-                                                placeholder="کد تخفیف دارید؟"
+                                            <input 
+                                                type="text" 
+                                                placeholder="کد تخفیف دارید؟" 
                                                 value={couponCode}
                                                 onChange={(e) => { setCouponCode(e.target.value); setCouponError(""); }}
                                                 className={`w-full bg-[#0f172a] border rounded-xl px-4 py-3 pr-10 text-sm focus:outline-none transition-colors ${couponError ? "border-red-500/50" : "border-white/10 focus:border-cyan-500"}`}
                                             />
                                             <Ticket className="absolute right-3 top-3 text-gray-500" size={18} />
-                                            <button
+                                            <button 
                                                 onClick={handleApplyCoupon}
                                                 disabled={couponLoading || !couponCode}
                                                 className="absolute left-2 top-2 bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
                                             >
-                                                {couponLoading ? <Loader2 className="animate-spin" size={14} /> : "اعمال"}
+                                                {couponLoading ? <Loader2 className="animate-spin" size={14}/> : "اعمال"}
                                             </button>
                                         </div>
                                     ) : (

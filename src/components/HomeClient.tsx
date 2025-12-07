@@ -2,16 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
-import Navbar from "@/components/Navbar";
+// import Navbar from "@/components/Navbar"; ❌ حذف شد
 import Hero from "@/components/Hero";
 import SmartSearchDemo from "@/components/SmartSearchDemo";
 import ComparisonSection from "@/components/ComparisonSection";
 import FullSpecsSection from "@/components/FullSpecsSection";
-import PricingSection from "@/components/PricingSection"; // مطمئن شوید این فایل export default دارد
+import PricingSection from "@/components/PricingSection";
 import FAQSection from "@/components/FAQSection";
 import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
-// import TestimonialsSection from "@/components/TestimonialsSection"; 
 
 interface Product {
     id: string;
@@ -22,7 +21,7 @@ interface Product {
 }
 
 interface HomeClientProps {
-    product: Product; // تایپ را دقیق‌تر کردیم
+    product: Product;
 }
 
 export default function HomeClient({ product }: HomeClientProps) {
@@ -42,24 +41,15 @@ export default function HomeClient({ product }: HomeClientProps) {
 
     return (
         <main className="bg-[#0f172a] min-h-screen text-white overflow-x-hidden font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
-            <Navbar onPreOrder={handlePreOrder} />
+            {/* <Navbar onPreOrder={handlePreOrder} /> ❌ حذف شد */}
 
             <div className="space-y-0">
                 <Hero onPreOrder={handlePreOrder} />
-
-                <div className="relative z-20">
-                    <SmartSearchDemo />
-                </div>
-
+                <div className="relative z-20"><SmartSearchDemo /></div>
                 <ComparisonSection product={product} />
-
                 <FullSpecsSection />
-
                 <PricingSection product={product} />
-
                 <FAQSection />
-
-                {/* <TestimonialsSection /> */}
             </div>
 
             <Footer />

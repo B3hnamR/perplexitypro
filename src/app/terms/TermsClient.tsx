@@ -1,29 +1,13 @@
 "use client";
 
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { useRouter } from "next/navigation";
-import { useCart } from "@/context/CartContext";
 
 export default function TermsClient() {
-    const router = useRouter();
-    const { addItem } = useCart();
-
-    const handlePreOrder = () => {
-        addItem({
-            id: "perplexity-pro-1year",
-            name: "Perplexity Pro Subscription",
-            price: 398000
-        });
-        router.push("/cart");
-    };
-
     return (
-        <main className="min-h-screen bg-[#0f172a] text-white font-sans">
-            <Navbar onPreOrder={handlePreOrder} />
-            <div className="pt-32 pb-20 max-w-4xl mx-auto px-4">
+        <main className="min-h-screen bg-[#0f172a] text-white font-sans flex flex-col">
+            <div className="flex-1 w-full pt-32 pb-20 max-w-4xl mx-auto px-4">
                 <h1 className="text-3xl font-black mb-8">قوانین و مقررات</h1>
-
+                
                 <div className="bg-[#1e293b] border border-white/5 rounded-3xl p-8 shadow-xl space-y-8 text-gray-300 leading-8 text-justify">
                     <section>
                         <h2 className="text-xl font-bold text-white mb-3">۱. تعاریف</h2>

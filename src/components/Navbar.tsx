@@ -2,23 +2,32 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation"; // ✅ usePathname اضافه شد
 import { Menu, X, Brain, User, LogOut, ChevronDown, LayoutDashboard, ShoppingCart, ListOrdered, Phone } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useCart } from "@/context/CartContext";
 import CheckoutModal from "./CheckoutModal";
 
-interface NavbarProps {
-    onPreOrder: () => void;
-}
-
-export default function Navbar({ onPreOrder }: NavbarProps) {
+export default function Navbar() {
     const { data: session } = useSession();
-    const { count } = useCart();
+    const { count, addItem } = useCart();
+    const router = useRouter();
+    const pathname = usePathname(); // ✅ دریافت آدرس فعلی
+
     const [isOpen, setIsOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    const handlePreOrder = () => {
+        addItem({
+            id: "perplexity-pro-1year",
+            name: "Perplexity Pro Subscription",
+            price: 398000
+        });
+        router.push("/cart");
+    };
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -37,6 +46,11 @@ export default function Navbar({ onPreOrder }: NavbarProps) {
         };
     }, []);
 
+    // ✅ شرط حیاتی: اگر در پنل ادمین یا صفحه لاگین هستیم، نوار ناوبری را نشان نده
+    if (pathname.startsWith("/admin") || pathname.startsWith("/auth")) {
+        return null;
+    }
+
     return (
         <>
             <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[#0f172a]/95 backdrop-blur-xl border-b border-white/10 shadow-lg' : 'bg-transparent'}`}>
@@ -53,7 +67,7 @@ export default function Navbar({ onPreOrder }: NavbarProps) {
                             </span>
                         </Link>
 
-                        {/* Desktop Menu - ✅ تراز شده و زیباتر */}
+                        {/* Desktop Menu */}
                         <div className="hidden md:flex items-center gap-1 bg-white/5 p-1.5 rounded-2xl border border-white/5 backdrop-blur-sm">
                             <Link href="/#features" className="text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 px-4 py-2 rounded-xl transition-all">ویژگی‌ها</Link>
                             <Link href="/#pricing" className="text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 px-4 py-2 rounded-xl transition-all">قیمت‌ها</Link>
@@ -104,7 +118,7 @@ export default function Navbar({ onPreOrder }: NavbarProps) {
                                             </Link>
 
                                             {(session.user as any).role !== "ADMIN" && (
-                                                 <button onClick={onPreOrder} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white rounded-xl transition-colors text-right">
+                                                 <button onClick={handlePreOrder} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white rounded-xl transition-colors text-right">
                                                     <User size={18} className="text-purple-400"/>
                                                     خرید اشتراک جدید
                                                 </button>

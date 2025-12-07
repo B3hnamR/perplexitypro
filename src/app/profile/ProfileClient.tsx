@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import Navbar from "@/components/Navbar";
 import { ShoppingBag, CheckCircle, Clock, XCircle, Loader2, Download } from "lucide-react";
 import Link from "next/link";
 
@@ -54,15 +53,10 @@ export default function ProfileClient() {
         }
     };
 
-    const handlePreOrder = () => {
-        router.push("/cart");
-    };
-
     if (status === "loading" || loading) return <div className="min-h-screen bg-[#0f172a] flex items-center justify-center text-cyan-400"><Loader2 className="animate-spin" size={40} /></div>;
 
     return (
         <main className="min-h-screen bg-[#0f172a] font-sans text-white pb-20">
-            <Navbar onPreOrder={handlePreOrder} />
             
             <div className="pt-32 max-w-4xl mx-auto px-4">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
@@ -72,7 +66,6 @@ export default function ProfileClient() {
                     </div>
                     <div className="bg-[#1e293b] px-4 py-2 rounded-xl border border-white/10 text-sm flex items-center gap-2">
                         <span className="text-gray-400">شماره موبایل:</span> 
-                        {/* ✅ اصلاح تایپ‌اسکریپت: استفاده از as any */}
                         <span className="text-white font-mono dir-ltr">{(session?.user as any)?.mobile}</span>
                     </div>
                 </div>

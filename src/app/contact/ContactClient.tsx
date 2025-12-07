@@ -1,27 +1,11 @@
 "use client";
 
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Mail, Phone, Clock, MapPin } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useCart } from "@/context/CartContext";
 
 export default function ContactClient() {
-    const router = useRouter();
-    const { addItem } = useCart();
-
-    const handlePreOrder = () => {
-        addItem({
-            id: "perplexity-pro-1year",
-            name: "Perplexity Pro Subscription",
-            price: 398000
-        });
-        router.push("/cart");
-    };
-
     return (
         <main className="min-h-screen bg-[#0f172a] text-white font-sans flex flex-col">
-            <Navbar onPreOrder={handlePreOrder} />
             
             <div className="flex-1 w-full pt-32 pb-20 max-w-4xl mx-auto px-4">
                 <h1 className="text-3xl font-black mb-8 text-center">تماس با ما</h1>
@@ -45,7 +29,7 @@ export default function ContactClient() {
                                 <div className="bg-cyan-500/10 p-3 rounded-xl text-cyan-400"><Phone size={24} /></div>
                                 <div>
                                     <h3 className="font-bold text-white mb-1">تلفن تماس</h3>
-                                    <p className="text-gray-400 text-sm dir-ltr text-right font-mono tracking-wider">4345 156 0936</p>
+                                    <p className="text-gray-400 text-sm dir-ltr text-right font-mono tracking-wider">0936 156 4345</p>
                                 </div>
                             </div>
                         </div>
