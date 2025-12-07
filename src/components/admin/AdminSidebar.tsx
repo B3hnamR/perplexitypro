@@ -10,7 +10,8 @@ import {
     Link as LinkIcon, 
     Brain, 
     Users, 
-    Ticket // ✅ اضافه شد
+    Ticket,
+    Settings // ✅ اضافه شد
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 
@@ -20,7 +21,8 @@ const navItems = [
     { href: "/admin/users", label: "کاربران", icon: Users },
     { href: "/admin/product", label: "محصول", icon: Package },
     { href: "/admin/links", label: "انبار لینک‌ها", icon: LinkIcon },
-    { href: "/admin/coupons", label: "کدهای تخفیف", icon: Ticket }, // ✅ اضافه شد
+    { href: "/admin/coupons", label: "کدهای تخفیف", icon: Ticket },
+    { href: "/admin/settings", label: "تنظیمات سایت", icon: Settings }, // ✅ اضافه شد
 ];
 
 export default function AdminSidebar({ onClose }: { onClose?: () => void }) {
@@ -37,10 +39,9 @@ export default function AdminSidebar({ onClose }: { onClose?: () => void }) {
                         Perplexity<span className="text-cyan-400">Pro</span>
                     </span>
                 </div>
-                {/* دکمه بستن فقط در موبایل نمایش داده می‌شود (اگر پراپ onClose پاس داده شود) */}
+                {/* دکمه بستن فقط در موبایل نمایش داده می‌شود */}
                 {onClose && (
                     <button onClick={onClose} className="lg:hidden text-gray-400 hover:text-white transition-colors">
-                        {/* آیکون ضربدر در کامپوننت والد هندل شده یا اینجا می‌توانید بگذارید */}
                         ✕
                     </button>
                 )}
