@@ -28,6 +28,7 @@ export default function RichEditor({ content, onChange }: RichEditorProps) {
         onUpdate: ({ editor }) => {
             onChange(editor.getHTML());
         },
+        immediatelyRender: false, // ✅ این خط برای رفع ارور SSR حیاتی است
     });
 
     if (!editor) return null;
@@ -42,7 +43,6 @@ export default function RichEditor({ content, onChange }: RichEditorProps) {
                 const formData = new FormData();
                 formData.append('file', file);
 
-                // آپلود به سرور خودمان (که به S3 می‌فرستد)
                 try {
                     const res = await axios.post('/api/admin/blog/upload', formData);
                     if (res.data.url) {
