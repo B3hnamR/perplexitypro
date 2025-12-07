@@ -91,6 +91,7 @@ model DiscountCode {
   minOrderPrice Float?
   maxDiscount   Float?
   maxUses       Int?
+  maxUsesPerUser Int?
   usedCount     Int      @default(0)
   expiresAt     DateTime?
   isActive      Boolean  @default(true)
