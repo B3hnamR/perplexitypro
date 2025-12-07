@@ -89,7 +89,9 @@ export default function Footer() {
                 
                 <div className="border-t border-white/5 pt-8 text-center text-gray-600 text-sm flex flex-col md:flex-row justify-between items-center gap-4">
                     <p>© ۱۴۰۳ تمامی حقوق برای <strong className="text-white">Perplexity Pro</strong> محفوظ است.</p>
-                    <p className="text-xs opacity-50">Design & Dev by <span className="text-cyan-500">Behnam R</span></p>
+                    <p className="text-xs opacity-50 flex items-center gap-1">
+                        طراحی و توسعه شده با <span className="text-red-500">❤️</span> توسط <strong className="text-cyan-500">بهنام رجب‌نژاد</strong>
+                    </p>
                 </div>
             </div>
         </footer>

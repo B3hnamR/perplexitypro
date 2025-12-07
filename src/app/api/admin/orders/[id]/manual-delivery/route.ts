@@ -21,11 +21,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             }
         });
 
-        // 2. دریافت اطلاعات تماس کاربر
-        const order = await prisma.order.findUnique({ where: { id } });
+        // 2. تغییر وضعیت سفارش به تکمیل شده
+        const order = await prisma.order.update({
+            where: { id },
+            data: { status: "COMPLETED" } // وضعیت را به تکمیل تغییر می‌دهیم
+        });
         
         if (order && order.customerPhone) {
-            // 3. ارسال پیامک اطلاع‌رسانی
+            // 3. ✅ ارسال پیامک اطلاع‌رسانی با قالب "ثبت سفارش"
+            // چون قالب جداگانه نساختیم، از همان قالب ثبت سفارش استفاده می‌کنیم تا کد پیگیری را ببیند
             await sendOrderNotification(order.customerPhone, order.trackingCode || "");
         }
 
