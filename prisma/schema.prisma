@@ -24,6 +24,10 @@ model User {
   email     String?
   role      String   @default("USER")
   orders    Order[]
+  
+  // ✅ اضافه شدن رابطه با پست‌ها (برای رفع ارور)
+  posts     Post[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -52,7 +56,7 @@ model Order {
   refId         String?  @unique
   trackingCode  String?  @unique
   amount        Float
-  originalAmount Float?  // مبلغ قبل از تخفیف
+  originalAmount Float?
   quantity      Int      @default(1)
   status        String   @default("PENDING")
   
@@ -66,7 +70,6 @@ model Order {
   downloadCount Int      @default(0)
   customData    String?  @db.Text
   
-  // ارتباط با کد تخفیف
   discountCodeId String?
   discountCode   DiscountCode? @relation(fields: [discountCodeId], references: [id])
   
@@ -80,23 +83,22 @@ model Order {
 }
 
 model DiscountCode {
-  id            String   @id @default(cuid())
-  code          String   @unique
-  type          String   // "PERCENTAGE" or "FIXED"
-  value         Float
+  id          String   @id @default(cuid())
+  code        String   @unique
+  type        String   // "PERCENTAGE" or "FIXED"
+  value       Float
   
   minOrderPrice Float?
   maxDiscount   Float?
-  maxUses       Int?     // سقف کل استفاده (برای همه)
-  maxUsesPerUser Int?    // ✅ فیلد جدید: سقف استفاده برای هر نفر
+  maxUses       Int?
   usedCount     Int      @default(0)
   expiresAt     DateTime?
   isActive      Boolean  @default(true)
   
   orders        Order[]
   
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model DownloadLink {
@@ -114,13 +116,7 @@ model DownloadLink {
   @@index([orderId])
 }
 
-model ActivityLog {
-  id        String   @id @default(cuid())
-  adminEmail String
-  action    String   // مثلا: "CREATE_PRODUCT", "UPDATE_ORDER"
-  details   String?
-  createdAt DateTime @default(now())
-}
+// --- مدل‌های جدید برای سیستم اعلانات و تنظیمات ---
 
 model Announcement {
   id        String   @id @default(cuid())
@@ -137,4 +133,24 @@ model Announcement {
 model Setting {
   key       String   @id
   value     String
+}
+
+// --- مدل‌های جدید برای بلاگ ---
+
+model Post {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  excerpt     String?  @db.Text
+  content     String   @db.LongText
+  coverImage  String?
+  published   Boolean  @default(false)
+  viewCount   Int      @default(0)
+  readingTime Int      @default(5)
+  
+  authorId    String?
+  author      User?    @relation(fields: [authorId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

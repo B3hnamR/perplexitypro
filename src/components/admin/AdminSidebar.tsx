@@ -11,7 +11,8 @@ import {
     Brain, 
     Users, 
     Ticket,
-    Settings // ✅ اضافه شد
+    Settings,
+    FileText // ✅ اضافه شده برای آیکون وبلاگ
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 
@@ -21,8 +22,9 @@ const navItems = [
     { href: "/admin/users", label: "کاربران", icon: Users },
     { href: "/admin/product", label: "محصول", icon: Package },
     { href: "/admin/links", label: "انبار لینک‌ها", icon: LinkIcon },
+    { href: "/admin/blog", label: "وبلاگ", icon: FileText }, // ✅ لینک جدید وبلاگ
     { href: "/admin/coupons", label: "کدهای تخفیف", icon: Ticket },
-    { href: "/admin/settings", label: "تنظیمات سایت", icon: Settings }, // ✅ اضافه شد
+    { href: "/admin/settings", label: "تنظیمات سایت", icon: Settings },
 ];
 
 export default function AdminSidebar({ onClose }: { onClose?: () => void }) {
@@ -49,7 +51,10 @@ export default function AdminSidebar({ onClose }: { onClose?: () => void }) {
 
             <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
                 {navItems.map((item) => {
-                    const isActive = pathname === item.href;
+                    // شرط فعال بودن: اگر آدرس دقیقاً برابر بود یا با آن شروع می‌شد (برای زیرمنوها)
+                    // استثنا: داشبورد فقط باید دقیق باشد تا با بقیه قاطی نشود
+                    const isActive = pathname === item.href || (item.href !== "/admin/dashboard" && pathname.startsWith(item.href));
+                    
                     return (
                         <Link
                             key={item.href}

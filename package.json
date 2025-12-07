@@ -14,6 +14,12 @@
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
+    "@aws-sdk/client-s3": "^3.946.0",
+    "@tiptap/extension-image": "^3.13.0",
+    "@tiptap/extension-link": "^3.13.0",
+    "@tiptap/extension-youtube": "^3.13.0",
+    "@tiptap/react": "^3.13.0",
+    "@tiptap/starter-kit": "^3.13.0",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
     "date-fns": "^4.1.0",
@@ -25,10 +31,12 @@
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "recharts": "^3.5.1",
+    "slugify": "^1.6.6",
     "zod": "^4.1.13"
   },
   "devDependencies": {
     "@prisma/client": "^5.10.2",
+    "@tailwindcss/typography": "^0.5.19",
     "@types/node": "^20.19.25",
     "@types/react": "^19",
     "@types/react-dom": "^19",
