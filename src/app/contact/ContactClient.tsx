@@ -45,7 +45,7 @@ export default function ContactClient() {
                                 <div className="bg-cyan-500/10 p-3 rounded-xl text-cyan-400"><Phone size={24} /></div>
                                 <div>
                                     <h3 className="font-bold text-white mb-1">تلفن تماس</h3>
-                                    <p className="text-gray-400 text-sm dir-ltr text-right font-mono tracking-wider">0936 156 4345</p>
+                                    <p className="text-gray-400 text-sm dir-ltr text-right font-mono tracking-wider">4345 156 0936</p>
                                 </div>
                             </div>
                         </div>

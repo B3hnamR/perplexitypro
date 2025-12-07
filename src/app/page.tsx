@@ -12,20 +12,37 @@ export const metadata: Metadata = {
 
 export default async function Home() {
   let product = null;
+  
   try {
+    // دریافت اولین محصول از دیتابیس برای نمایش قیمت و اطلاعات
     product = await prisma.product.findFirst();
   } catch (error) {
     console.error("Failed to load product for home page:", error);
+    // اگر دیتابیس خطا داد، محصول را null می‌گذاریم تا وارد بلوک بعدی شود
     product = null;
+  }
+
+  // ✅ بخش اضافه شده: اگر محصولی در دیتابیس نبود (یا ارور داد)، یک محصول پیش‌فرض می‌سازیم
+  if (!product) {
+    product = {
+        id: "default-pro",
+        name: "اشتراک Perplexity Pro",
+        description: "دسترسی نامحدود به هوش مصنوعی",
+        price: 398000, // قیمت پیش‌فرض برای نمایش در سایت
+        imageUrl: "/perplexity-pro-logo.png",
+        fileUrl: null,
+        createdAt: new Date(),
+        updatedAt: new Date()
+    };
   }
 
   // ✅ ساخت اسکیمای محصول (JSON-LD)
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
-    "name": product?.name || "Perplexity Pro Subscription",
-    "image": "https://perplexitypro.ir/perplexity-pro-share.jpg", // آدرس عکس محصول
-    "description": product?.description || "دسترسی نامحدود به هوش مصنوعی‌های GPT-5, Claude 3 و Gemini Pro",
+    "name": product.name, // مطمئنیم که product دیگر null نیست
+    "image": "https://perplexitypro.ir/perplexity-pro-share.jpg",
+    "description": product.description || "دسترسی نامحدود به هوش مصنوعی‌های GPT-5, Claude 3 و Gemini Pro",
     "brand": {
       "@type": "Brand",
       "name": "Perplexity"
@@ -34,7 +51,7 @@ export default async function Home() {
       "@type": "Offer",
       "url": "https://perplexitypro.ir",
       "priceCurrency": "IRR",
-      "price": product ? product.price * 10 : 3980000, // تبدیل تومان به ریال (استاندارد گوگل)
+      "price": product.price * 10, // تبدیل تومان به ریال
       "availability": "https://schema.org/InStock",
       "seller": {
         "@type": "Organization",

@@ -7,14 +7,22 @@ import Hero from "@/components/Hero";
 import SmartSearchDemo from "@/components/SmartSearchDemo";
 import ComparisonSection from "@/components/ComparisonSection";
 import FullSpecsSection from "@/components/FullSpecsSection";
-import PricingSection from "@/components/PricingSection";
+import PricingSection from "@/components/PricingSection"; // مطمئن شوید این فایل export default دارد
 import FAQSection from "@/components/FAQSection";
-// import TestimonialsSection from "@/components/TestimonialsSection"; // ⚠️ کامنت شد
 import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
+// import TestimonialsSection from "@/components/TestimonialsSection"; 
+
+interface Product {
+    id: string;
+    name: string;
+    price: number;
+    description?: string;
+    imageUrl?: string | null;
+}
 
 interface HomeClientProps {
-    product: any;
+    product: Product; // تایپ را دقیق‌تر کردیم
 }
 
 export default function HomeClient({ product }: HomeClientProps) {
@@ -43,17 +51,14 @@ export default function HomeClient({ product }: HomeClientProps) {
                     <SmartSearchDemo />
                 </div>
 
-                {/* جدول مقایسه */}
                 <ComparisonSection product={product} />
 
-                {/* مشخصات فنی کامل */}
                 <FullSpecsSection />
 
                 <PricingSection product={product} />
 
                 <FAQSection />
 
-                {/* ✅ بخش نظرات موقتا غیرفعال شد */}
                 {/* <TestimonialsSection /> */}
             </div>
 
