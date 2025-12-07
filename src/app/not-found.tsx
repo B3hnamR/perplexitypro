@@ -1,15 +1,7 @@
 import Link from "next/link";
 import { Search, Home, ArrowRight, Brain } from "lucide-react";
-import { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "صفحه پیدا نشد | Perplexity Pro",
-  description: "صفحه مورد نظر شما وجود ندارد.",
-  robots: {
-    index: false,
-    follow: false,
-  },
-};
+// ✅ بخش export const metadata حذف شد تا ارور برطرف شود
 
 export default function NotFound() {
   return (
