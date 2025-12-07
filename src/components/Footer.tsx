@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { Brain, Instagram, Send, Shield, CreditCard, CheckCircle } from "lucide-react";
+import { Brain, Instagram, Send, Shield, CreditCard } from "lucide-react";
 
 export default function Footer() {
     return (
@@ -52,12 +52,12 @@ export default function Footer() {
                         </ul>
                     </div>
 
-                    {/* ستون ۴: مجوزها (✅ کد اینماد اضافه شد) */}
+                    {/* ستون ۴: مجوزها و امنیت */}
                     <div>
                         <h4 className="font-bold text-white mb-6">مجوزها و امنیت</h4>
                         <div className="flex flex-wrap gap-3">
                             
-                            {/* کد اینماد */}
+                            {/* ✅ کد اصلاح شده اینماد */}
                             <div className="bg-white p-2 rounded-xl w-fit cursor-pointer hover:opacity-90 transition-opacity flex items-center justify-center">
                                 <a 
                                     referrerPolicy="origin" 
@@ -87,10 +87,11 @@ export default function Footer() {
                     </div>
                 </div>
                 
-                <div className="border-t border-white/5 pt-8 text-center text-gray-600 text-sm flex flex-col md:flex-row justify-between items-center gap-4">
+                <div className="border-t border-white/5 pt-8 text-center text-gray-400 text-sm flex flex-col md:flex-row justify-between items-center gap-4">
                     <p>© ۱۴۰۳ تمامی حقوق برای <strong className="text-white">Perplexity Pro</strong> محفوظ است.</p>
-                    <p className="text-xs opacity-50 flex items-center gap-1">
-                        طراحی و توسعه شده با <span className="text-red-500">❤️</span> توسط <strong className="text-cyan-500">بهنام رجب‌نژاد</strong>
+                    {/* ✅ متن پررنگ‌تر و بدون Opacity */}
+                    <p className="text-xs flex items-center gap-1 text-gray-400">
+                        طراحی و توسعه شده با <span className="text-red-500 animate-pulse">❤️</span> توسط <strong className="text-cyan-400 hover:text-cyan-300 transition-colors">بهنام رجب‌نژاد</strong>
                     </p>
                 </div>
             </div>
