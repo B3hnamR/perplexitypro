@@ -121,3 +121,20 @@ model ActivityLog {
   details   String?
   createdAt DateTime @default(now())
 }
+
+model Announcement {
+  id        String   @id @default(cuid())
+  type      String   // "BANNER", "MODAL_DISCOUNT", "MODAL_NEWS"
+  title     String?
+  message   String   @db.Text
+  link      String?
+  linkText  String?
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Setting {
+  key       String   @id
+  value     String
+}
