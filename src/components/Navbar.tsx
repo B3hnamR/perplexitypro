@@ -2,17 +2,20 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation"; // ✅ usePathname اضافه شد
+import { useRouter } from "next/navigation";
 import { Menu, X, Brain, User, LogOut, ChevronDown, LayoutDashboard, ShoppingCart, ListOrdered, Phone } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useCart } from "@/context/CartContext";
 import CheckoutModal from "./CheckoutModal";
 
-export default function Navbar() {
+interface NavbarProps {
+    isWrapperMode?: boolean; // ✅ پراپ جدید برای تشخیص حالت نمایش
+}
+
+export default function Navbar({ isWrapperMode = false }: NavbarProps) {
     const { data: session } = useSession();
     const { count, addItem } = useCart();
     const router = useRouter();
-    const pathname = usePathname(); // ✅ دریافت آدرس فعلی
 
     const [isOpen, setIsOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
@@ -46,14 +49,14 @@ export default function Navbar() {
         };
     }, []);
 
-    // ✅ شرط حیاتی: اگر در پنل ادمین یا صفحه لاگین هستیم، نوار ناوبری را نشان نده
-    if (pathname.startsWith("/admin") || pathname.startsWith("/auth")) {
-        return null;
-    }
+    // ✅ انتخاب کلاس‌ها بر اساس اینکه آیا داخل Wrapper هستیم یا نه
+    const navContainerClass = isWrapperMode 
+        ? `w-full transition-all duration-300 ${scrolled ? 'bg-[#0f172a]/95 backdrop-blur-xl border-b border-white/10 shadow-lg' : 'bg-transparent'}`
+        : `fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[#0f172a]/95 backdrop-blur-xl border-b border-white/10 shadow-lg' : 'bg-transparent'}`;
 
     return (
         <>
-            <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[#0f172a]/95 backdrop-blur-xl border-b border-white/10 shadow-lg' : 'bg-transparent'}`}>
+            <nav className={navContainerClass}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-20">
                         
@@ -79,7 +82,6 @@ export default function Navbar() {
 
                         {/* Actions */}
                         <div className="hidden md:flex items-center gap-4">
-                            {/* Shopping Cart */}
                             <Link href="/cart" className="text-gray-300 hover:text-white transition-colors relative p-2.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5">
                                 <ShoppingCart size={20} />
                                 {count > 0 && (

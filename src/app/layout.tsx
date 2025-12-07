@@ -2,11 +2,10 @@ import type { Metadata, Viewport } from "next";
 import { Vazirmatn } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
-import NotificationSystem from "@/components/NotificationSystem";
 import MaintenanceScreen from "@/components/MaintenanceScreen";
+import HeaderWrapper from "@/components/HeaderWrapper"; // ✅ فایل جدید
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
-import Navbar from "@/components/Navbar"; // ✅ ایمپورت شد
 
 const vazirmatn = Vazirmatn({ 
   subsets: ["arabic", "latin"],
@@ -57,8 +56,7 @@ export default async function RootLayout({
              <MaintenanceScreen />
           ) : (
              <>
-                <NotificationSystem />
-                <Navbar /> {/* ✅ اینجا اضافه شد تا در همه صفحات باشد */}
+                <HeaderWrapper /> {/* ✅ مدیریت هدر و اعلانات یکجا */}
                 {children}
              </>
           )}
