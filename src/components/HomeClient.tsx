@@ -9,7 +9,7 @@ import ComparisonSection from "@/components/ComparisonSection";
 import FullSpecsSection from "@/components/FullSpecsSection";
 import PricingSection from "@/components/PricingSection";
 import FAQSection from "@/components/FAQSection";
-import TestimonialsSection from "@/components/TestimonialsSection";
+// import TestimonialsSection from "@/components/TestimonialsSection"; // ⚠️ کامنت شد
 import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
 
@@ -46,14 +46,15 @@ export default function HomeClient({ product }: HomeClientProps) {
                 {/* جدول مقایسه */}
                 <ComparisonSection product={product} />
 
-                {/* مشخصات فنی کامل (جایگزین بخش قدیمی) */}
+                {/* مشخصات فنی کامل */}
                 <FullSpecsSection />
 
                 <PricingSection product={product} />
 
                 <FAQSection />
 
-                <TestimonialsSection />
+                {/* ✅ بخش نظرات موقتا غیرفعال شد */}
+                {/* <TestimonialsSection /> */}
             </div>
 
             <Footer />
