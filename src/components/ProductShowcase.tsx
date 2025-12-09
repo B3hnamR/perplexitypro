@@ -1,7 +1,6 @@
 "use client";
 
 import { Zap } from "lucide-react";
-// Image دیگر نیاز نیست چون از ویدیو استفاده می‌کنیم (مگر برای پوستر ویدیو)
 
 export default function ProductShowcase() {
     return (
@@ -47,39 +46,42 @@ export default function ProductShowcase() {
                     </div>
 
                     {/* Right: Laptop Mockup */}
-                    <div className="relative group perspective-1000">
+                    {/* تغییر مهم: حذف کلاس‌های 3D (rotate-y) برای افزایش شارپنس تصویر */}
+                    <div className="relative w-full max-w-2xl mx-auto lg:mr-0 group">
+                        
                         {/* Laptop Body */}
-                        <div className="relative bg-[#0f172a] rounded-xl border border-white/10 shadow-2xl transform transition-transform duration-500 group-hover:scale-[1.02] group-hover:rotate-y-2">
-                            {/* Screen Header (Mac style) */}
-                            <div className="h-8 bg-[#1e293b] rounded-t-xl border-b border-white/5 flex items-center px-4 gap-2">
-                                <div className="w-3 h-3 rounded-full bg-red-500/50"></div>
-                                <div className="w-3 h-3 rounded-full bg-yellow-500/50"></div>
-                                <div className="w-3 h-3 rounded-full bg-green-500/50"></div>
-                                <div className="ml-4 flex-1 bg-black/20 h-5 rounded-md mx-auto max-w-xs"></div>
+                        <div className="relative bg-[#0f172a] rounded-xl border border-white/10 shadow-2xl transition-transform duration-500 hover:scale-[1.01]">
+                            
+                            {/* Screen Header */}
+                            <div className="h-6 md:h-8 bg-[#1e293b] rounded-t-xl border-b border-white/5 flex items-center px-4 gap-2">
+                                <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-red-500/50"></div>
+                                <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-yellow-500/50"></div>
+                                <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-green-500/50"></div>
+                                <div className="ml-4 flex-1 bg-black/20 h-4 md:h-5 rounded-md mx-auto max-w-xs hidden sm:block"></div>
                             </div>
                             
                             {/* Screen Content (Video) */}
-                            <div className="relative aspect-[16/10] bg-black overflow-hidden rounded-b-xl">
-                                {/* ✅ تگ ویدیو جایگزین عکس شد */}
+                            <div className="relative aspect-video bg-black overflow-hidden rounded-b-xl">
                                 <video 
-                                    className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                                    className="w-full h-full object-cover" // حذف opacity-90
                                     autoPlay 
                                     loop 
                                     muted 
-                                    playsInline // برای پخش خودکار در آیفون
-                                    poster="/perplexity-pro-dark.png" // عکسی که تا قبل از لود شدن ویدیو نمایش داده می‌شود
+                                    playsInline
+                                    poster="/perplexity-pro-dark.png"
+                                    // اضافه کردن این استایل برای جلوگیری از مات شدن در کروم
+                                    style={{ backfaceVisibility: 'hidden', transform: 'translateZ(0)' }}
                                 >
                                     <source src="/showcase.mp4" type="video/mp4" />
                                     مرورگر شما از ویدیو پشتیبانی نمی‌کند.
                                 </video>
                                 
-                                {/* Overlay Gradient (کمی محو روی ویدیو برای زیبایی) */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-transparent to-transparent opacity-20 pointer-events-none"></div>
+                                {/* حذف لایه گرادینت تیره روی ویدیو برای شفافیت حداکثری */}
                             </div>
                         </div>
 
-                        {/* Laptop Base (Keyboard area) */}
-                        <div className="absolute -bottom-4 left-[5%] right-[5%] h-4 bg-[#1e293b] rounded-b-xl transform perspective-origin-top rotate-x-12 border-t border-white/5 shadow-2xl z-[-1]"></div>
+                        {/* Laptop Base */}
+                        <div className="absolute -bottom-3 md:-bottom-4 left-[5%] right-[5%] h-3 md:h-4 bg-[#1e293b] rounded-b-xl border-t border-white/5 shadow-2xl z-[-1]"></div>
                     </div>
 
                 </div>
