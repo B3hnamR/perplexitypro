@@ -3,7 +3,8 @@ import { Vazirmatn } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import MaintenanceScreen from "@/components/MaintenanceScreen";
-import HeaderWrapper from "@/components/HeaderWrapper"; // ✅ فایل جدید
+import HeaderWrapper from "@/components/HeaderWrapper";
+import ExitPopup from "@/components/ExitPopup";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 
@@ -57,6 +58,7 @@ export default async function RootLayout({
           ) : (
              <>
                 <HeaderWrapper /> {/* ✅ مدیریت هدر و اعلانات یکجا */}
+                <ExitPopup /> {/* ✅ اینجا اضافه شد */}
                 {children}
              </>
           )}

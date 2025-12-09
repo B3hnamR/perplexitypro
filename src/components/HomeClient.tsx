@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 // import Navbar from "@/components/Navbar"; ❌ حذف شد
 import Hero from "@/components/Hero";
-import SmartSearchDemo from "@/components/SmartSearchDemo";
+// import SmartSearchDemo from "@/components/SmartSearchDemo";
+import ProductShowcase from "@/components/ProductShowcase";
 import ComparisonSection from "@/components/ComparisonSection";
 import FullSpecsSection from "@/components/FullSpecsSection";
 import PricingSection from "@/components/PricingSection";
@@ -45,7 +46,7 @@ export default function HomeClient({ product }: HomeClientProps) {
 
             <div className="space-y-0">
                 <Hero onPreOrder={handlePreOrder} />
-                <div className="relative z-20"><SmartSearchDemo /></div>
+                <div className="relative z-20"><ProductShowcase /></div>
                 <ComparisonSection product={product} />
                 <FullSpecsSection />
                 <PricingSection product={product} />
