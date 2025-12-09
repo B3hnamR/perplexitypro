@@ -8,12 +8,10 @@ export default function ProductShowcase() {
             {/* Background Glow */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[800px] bg-cyan-500/10 rounded-full blur-[120px] pointer-events-none"></div>
 
-            {/* کانتینر عریض‌تر برای نمایش بهتر */}
             <div className="max-w-[95rem] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                {/* تغییر گرید به 12 ستون برای کنترل دقیق‌تر سایز */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
                     
-                    {/* Left: Text & Steps (سهم کمتر: 5 از 12) */}
+                    {/* Left: Text & Steps */}
                     <div className="text-right space-y-10 order-2 lg:order-1 lg:col-span-5">
                         <div>
                             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-400 text-xs font-bold mb-6 border border-cyan-500/20">
@@ -47,14 +45,16 @@ export default function ProductShowcase() {
                         </div>
                     </div>
 
-                    {/* Right: Laptop Mockup (سهم بیشتر: 7 از 12) */}
+                    {/* Right: Laptop Mockup */}
                     <div className="relative w-full lg:col-span-7 order-1 lg:order-2">
-                        <div className="group relative">
+                        {/* ⚠️ حذف کلاس‌های group و perspective و transform برای شارپنس حداکثری */}
+                        <div className="relative">
+                            
                             {/* Laptop Body */}
-                            <div className="relative bg-[#0f172a] rounded-xl border border-white/10 shadow-2xl transition-transform duration-700 hover:scale-[1.02]">
+                            <div className="relative bg-[#0f172a] rounded-xl border border-white/10 shadow-2xl overflow-hidden">
                                 
                                 {/* Screen Header */}
-                                <div className="h-7 md:h-10 bg-[#1e293b] rounded-t-xl border-b border-white/5 flex items-center px-5 gap-2.5">
+                                <div className="h-7 md:h-10 bg-[#1e293b] border-b border-white/5 flex items-center px-5 gap-2.5">
                                     <div className="w-3 h-3 rounded-full bg-red-500/50"></div>
                                     <div className="w-3 h-3 rounded-full bg-yellow-500/50"></div>
                                     <div className="w-3 h-3 rounded-full bg-green-500/50"></div>
@@ -62,7 +62,7 @@ export default function ProductShowcase() {
                                 </div>
                                 
                                 {/* Screen Content (Video) */}
-                                <div className="relative aspect-video bg-black overflow-hidden rounded-b-xl">
+                                <div className="relative aspect-video bg-black">
                                     <video 
                                         className="w-full h-full object-cover"
                                         autoPlay 
@@ -70,7 +70,7 @@ export default function ProductShowcase() {
                                         muted 
                                         playsInline
                                         poster="/perplexity-pro-dark.png"
-                                        style={{ backfaceVisibility: 'hidden', transform: 'translateZ(0)' }}
+                                        /* حذف تمامی استایل‌های اضافی transform و opacity */
                                     >
                                         <source src="/showcase.mp4" type="video/mp4" />
                                         مرورگر شما از ویدیو پشتیبانی نمی‌کند.
