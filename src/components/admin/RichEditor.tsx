@@ -2,9 +2,13 @@
 
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import Image from '@tiptap/extension-image';
+// ✅ تغییر ۱: استفاده از ImageResize به جای Image معمولی
+import ImageResize from 'tiptap-extension-resize-image';
 import Link from '@tiptap/extension-link';
-import { Bold, Italic, List, ListOrdered, Image as ImageIcon, Link as LinkIcon, Heading1, Heading2, Quote } from 'lucide-react';
+import { 
+    Bold, Italic, List, ListOrdered, Image as ImageIcon, Link as LinkIcon, 
+    Heading1, Heading2, Quote, Undo, Redo, Minus, Code 
+} from 'lucide-react';
 import axios from 'axios';
 
 interface RichEditorProps {
@@ -17,18 +21,22 @@ export default function RichEditor({ content, onChange }: RichEditorProps) {
         extensions: [
             StarterKit,
             Link.configure({ openOnClick: false }),
-            Image.configure({ inline: true }),
+            // ✅ تغییر ۲: کانفیگ افزونه تغییر سایز
+            ImageResize.configure({
+                inline: true,
+                allowBase64: true,
+            }),
         ],
         content,
         editorProps: {
             attributes: {
-                class: 'prose prose-invert max-w-none focus:outline-none min-h-[300px] p-4 text-white',
+                class: 'prose prose-invert max-w-none focus:outline-none min-h-[300px] p-6 text-white text-lg leading-relaxed',
             },
         },
         onUpdate: ({ editor }) => {
             onChange(editor.getHTML());
         },
-        immediatelyRender: false, // ✅ این خط برای رفع ارور SSR حیاتی است
+        immediatelyRender: false,
     });
 
     if (!editor) return null;
@@ -67,25 +75,115 @@ export default function RichEditor({ content, onChange }: RichEditorProps) {
         editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
     };
 
+    const ToolbarButton = ({ onClick, isActive, icon: Icon }: any) => (
+        <button 
+            type="button" 
+            onClick={onClick} 
+            className={`p-2 rounded-lg transition-all ${
+                isActive 
+                ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/20' 
+                : 'text-gray-400 hover:bg-white/10 hover:text-white'
+            }`}
+        >
+            <Icon size={18}/>
+        </button>
+    );
+
     return (
-        <div className="border border-white/10 rounded-xl overflow-hidden bg-[#0f172a]">
+        <div className="border border-white/10 rounded-2xl overflow-hidden bg-[#0f172a] shadow-2xl">
             {/* Toolbar */}
-            <div className="bg-[#1e293b] p-2 flex flex-wrap gap-1 border-b border-white/10">
-                <button type="button" onClick={() => editor.chain().focus().toggleBold().run()} className={`p-2 rounded hover:bg-white/10 ${editor.isActive('bold') ? 'text-cyan-400 bg-white/10' : 'text-gray-400'}`}><Bold size={18}/></button>
-                <button type="button" onClick={() => editor.chain().focus().toggleItalic().run()} className={`p-2 rounded hover:bg-white/10 ${editor.isActive('italic') ? 'text-cyan-400 bg-white/10' : 'text-gray-400'}`}><Italic size={18}/></button>
-                <div className="w-px bg-white/10 mx-1"></div>
-                <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={`p-2 rounded hover:bg-white/10 ${editor.isActive('heading', { level: 2 }) ? 'text-cyan-400 bg-white/10' : 'text-gray-400'}`}><Heading1 size={18}/></button>
-                <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} className={`p-2 rounded hover:bg-white/10 ${editor.isActive('heading', { level: 3 }) ? 'text-cyan-400 bg-white/10' : 'text-gray-400'}`}><Heading2 size={18}/></button>
-                <div className="w-px bg-white/10 mx-1"></div>
-                <button type="button" onClick={() => editor.chain().focus().toggleBulletList().run()} className={`p-2 rounded hover:bg-white/10 ${editor.isActive('bulletList') ? 'text-cyan-400 bg-white/10' : 'text-gray-400'}`}><List size={18}/></button>
-                <button type="button" onClick={() => editor.chain().focus().toggleOrderedList().run()} className={`p-2 rounded hover:bg-white/10 ${editor.isActive('orderedList') ? 'text-cyan-400 bg-white/10' : 'text-gray-400'}`}><ListOrdered size={18}/></button>
-                <button type="button" onClick={() => editor.chain().focus().toggleBlockquote().run()} className={`p-2 rounded hover:bg-white/10 ${editor.isActive('blockquote') ? 'text-cyan-400 bg-white/10' : 'text-gray-400'}`}><Quote size={18}/></button>
-                <div className="w-px bg-white/10 mx-1"></div>
-                <button type="button" onClick={setLink} className={`p-2 rounded hover:bg-white/10 ${editor.isActive('link') ? 'text-cyan-400 bg-white/10' : 'text-gray-400'}`}><LinkIcon size={18}/></button>
-                <button type="button" onClick={addImage} className="p-2 rounded hover:bg-white/10 text-gray-400"><ImageIcon size={18}/></button>
+            <div className="bg-[#1e293b] p-3 flex flex-wrap items-center gap-2 border-b border-white/10 sticky top-0 z-10">
+                <div className="flex gap-1">
+                    <ToolbarButton onClick={() => editor.chain().focus().undo().run()} icon={Undo} />
+                    <ToolbarButton onClick={() => editor.chain().focus().redo().run()} icon={Redo} />
+                </div>
+                
+                <div className="w-px h-6 bg-white/10 mx-2"></div>
+
+                <div className="flex gap-1">
+                    <ToolbarButton 
+                        onClick={() => editor.chain().focus().toggleBold().run()} 
+                        isActive={editor.isActive('bold')} 
+                        icon={Bold} 
+                    />
+                    <ToolbarButton 
+                        onClick={() => editor.chain().focus().toggleItalic().run()} 
+                        isActive={editor.isActive('italic')} 
+                        icon={Italic} 
+                    />
+                     <ToolbarButton 
+                        onClick={() => editor.chain().focus().toggleCodeBlock().run()} 
+                        isActive={editor.isActive('codeBlock')} 
+                        icon={Code} 
+                    />
+                </div>
+
+                <div className="w-px h-6 bg-white/10 mx-2"></div>
+
+                <div className="flex gap-1">
+                    <ToolbarButton 
+                        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} 
+                        isActive={editor.isActive('heading', { level: 2 })} 
+                        icon={Heading1} 
+                    />
+                    <ToolbarButton 
+                        onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} 
+                        isActive={editor.isActive('heading', { level: 3 })} 
+                        icon={Heading2} 
+                    />
+                </div>
+
+                <div className="w-px h-6 bg-white/10 mx-2"></div>
+
+                <div className="flex gap-1">
+                    <ToolbarButton 
+                        onClick={() => editor.chain().focus().toggleBulletList().run()} 
+                        isActive={editor.isActive('bulletList')} 
+                        icon={List} 
+                    />
+                    <ToolbarButton 
+                        onClick={() => editor.chain().focus().toggleOrderedList().run()} 
+                        isActive={editor.isActive('orderedList')} 
+                        icon={ListOrdered} 
+                    />
+                    <ToolbarButton 
+                        onClick={() => editor.chain().focus().toggleBlockquote().run()} 
+                        isActive={editor.isActive('blockquote')} 
+                        icon={Quote} 
+                    />
+                </div>
+
+                <div className="w-px h-6 bg-white/10 mx-2"></div>
+
+                <div className="flex gap-1">
+                    <ToolbarButton 
+                        onClick={() => editor.chain().focus().setHorizontalRule().run()} 
+                        icon={Minus} 
+                    />
+                    <ToolbarButton 
+                        onClick={setLink} 
+                        isActive={editor.isActive('link')} 
+                        icon={LinkIcon} 
+                    />
+                    <ToolbarButton 
+                        onClick={addImage} 
+                        icon={ImageIcon} 
+                    />
+                </div>
             </div>
             
             <EditorContent editor={editor} />
+            
+            {/* استایل کمکی برای هندل‌های تغییر سایز */}
+            <style jsx global>{`
+                .ProseMirror img {
+                    transition: all 0.2s;
+                }
+                .ProseMirror img.ProseMirror-selectednode {
+                    outline: 3px solid #06b6d4;
+                    border-radius: 8px;
+                }
+            `}</style>
         </div>
     );
 }
