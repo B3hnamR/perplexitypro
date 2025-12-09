@@ -1,7 +1,7 @@
 "use client";
 
-import { CheckCircle, Zap } from "lucide-react";
-import Image from "next/image";
+import { Zap } from "lucide-react";
+// Image دیگر نیاز نیست چون از ویدیو استفاده می‌کنیم (مگر برای پوستر ویدیو)
 
 export default function ProductShowcase() {
     return (
@@ -58,26 +58,23 @@ export default function ProductShowcase() {
                                 <div className="ml-4 flex-1 bg-black/20 h-5 rounded-md mx-auto max-w-xs"></div>
                             </div>
                             
-                            {/* Screen Content */}
+                            {/* Screen Content (Video) */}
                             <div className="relative aspect-[16/10] bg-black overflow-hidden rounded-b-xl">
-                                {/* ⚠️ اینجا عکس محیط برنامه رو بزارید */}
-                                {/* اگر فایل ندارید، این عکس پیش‌فرض لود میشه */}
-                                <Image 
-                                    src="/perplexity-pro-dark.png" 
-                                    alt="Perplexity Interface" 
-                                    fill 
-                                    className="object-cover opacity-90 group-hover:opacity-100 transition-opacity"
-                                />
+                                {/* ✅ تگ ویدیو جایگزین عکس شد */}
+                                <video 
+                                    className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                                    autoPlay 
+                                    loop 
+                                    muted 
+                                    playsInline // برای پخش خودکار در آیفون
+                                    poster="/perplexity-pro-dark.png" // عکسی که تا قبل از لود شدن ویدیو نمایش داده می‌شود
+                                >
+                                    <source src="/showcase.mp4" type="video/mp4" />
+                                    مرورگر شما از ویدیو پشتیبانی نمی‌کند.
+                                </video>
                                 
-                                {/* Overlay Gradient */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-transparent to-transparent opacity-50"></div>
-                                
-                                {/* Play Button Mockup (Optional) */}
-                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                    <div className="w-20 h-20 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 shadow-2xl animate-pulse">
-                                        <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[20px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
-                                    </div>
-                                </div>
+                                {/* Overlay Gradient (کمی محو روی ویدیو برای زیبایی) */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-transparent to-transparent opacity-20 pointer-events-none"></div>
                             </div>
                         </div>
 
