@@ -31,7 +31,7 @@ export async function POST(req: Request) {
             gateway: gateway as "ZARINPAL" | "ZIBAL",
             amount: order.amount,
             description: `Order ${order.trackingCode}`,
-            mobile: order.customerPhone || session.user?.mobile || "",
+            mobile: order.customerPhone || (session as any).user?.mobile || "",
             callbackUrl: callbackUrl
         });
 

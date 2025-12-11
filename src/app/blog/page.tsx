@@ -1,4 +1,3 @@
-import Navbar from "@/components/Navbar"; // این از Layout میاد ولی برای این صفحه خاص شاید بخواهید layout جدا داشته باشید، اما طبق layout اصلی کار میکند
 import Footer from "@/components/Footer";
 import { prisma } from "@/lib/db";
 import Link from "next/link";
@@ -6,25 +5,28 @@ import Image from "next/image";
 import { Calendar, Clock, ArrowLeft } from "lucide-react";
 import { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export const metadata: Metadata = {
-    title: "وبلاگ Perplexity Pro | آخرین اخبار و آموزش‌های هوش مصنوعی",
-    description: "مقالات تخصصی درباره GPT-5، Claude 3 و ترفندهای استفاده از هوش مصنوعی.",
+    title: "بلاگ Perplexity Pro | مقالات و آموزش هوش مصنوعی",
+    description: "جدیدترین مقالات و آموزش‌های کاربردی درباره GPT، Claude، Gemini و هوش مصنوعی در وبلاگ Perplexity Pro.",
 };
 
-export const revalidate = 60; // آپدیت هر ۱ دقیقه
-
 export default async function BlogPage() {
-    const posts = await prisma.post.findMany({
-        where: { published: true },
-        orderBy: { createdAt: "desc" }
-    });
+    const posts = process.env.DATABASE_URL
+        ? await prisma.post.findMany({
+            where: { published: true },
+            orderBy: { createdAt: "desc" }
+        })
+        : [];
 
     return (
         <main className="min-h-screen bg-[#0f172a] text-white font-sans pt-32 pb-20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-16">
-                    <h1 className="text-4xl md:text-5xl font-black mb-4">وبلاگ <span className="text-cyan-400">تخصصی</span></h1>
-                    <p className="text-gray-400 text-lg">جدیدترین اخبار و آموزش‌های دنیای هوش مصنوعی</p>
+                    <h1 className="text-4xl md:text-5xl font-black mb-4">بلاگ <span className="text-cyan-400">پرپلکسیتی پرو</span></h1>
+                    <p className="text-gray-400 text-lg">جدیدترین مقالات و آموزش‌های هوش مصنوعی و ابزارهای پیشرفته</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

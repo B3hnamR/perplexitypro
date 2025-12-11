@@ -5,8 +5,13 @@ import Footer from "@/components/Footer";
 import { Metadata } from "next";
 import { Calendar, Clock, User } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
     const { slug } = await params;
+    if (!process.env.DATABASE_URL) return { title: "Not Found" };
+
     const post = await prisma.post.findUnique({ where: { slug } });
     if (!post) return { title: "Not Found" };
     
@@ -21,14 +26,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
+    if (!process.env.DATABASE_URL) notFound();
     const post = await prisma.post.findUnique({ 
         where: { slug },
-        include: { author: { select: { name: true } } }
+        include: { author: { select: { firstName: true, lastName: true } } }
     });
 
     if (!post || !post.published) notFound();
-
-    // افزایش بازدید (باید در یک API جداگانه باشد تا صفحه استاتیک بماند، اما برای سادگی اینجا نمی‌گذاریم چون SSR را کند می‌کند)
+    const authorName = `${post.author?.firstName || ""} ${post.author?.lastName || ""}`.trim() || "نویسنده";
 
     return (
         <main className="min-h-screen bg-[#0f172a] text-white font-sans pt-32 pb-20">
@@ -38,7 +43,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                     <div className="flex items-center justify-center gap-4 text-sm text-gray-400 mb-4">
                         <span className="flex items-center gap-1"><Calendar size={14}/> {new Date(post.createdAt).toLocaleDateString('fa-IR')}</span>
                         <span className="flex items-center gap-1"><Clock size={14}/> {post.readingTime} دقیقه مطالعه</span>
-                        <span className="flex items-center gap-1"><User size={14}/> {post.author?.name || "ادمین"}</span>
+                        <span className="flex items-center gap-1"><User size={14}/> {authorName}</span>
                     </div>
                     <h1 className="text-3xl md:text-5xl font-black text-white leading-tight mb-8">{post.title}</h1>
                     
@@ -49,7 +54,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                     )}
                 </div>
 
-                {/* Content - استفاده از Tailwind Typography */}
+                {/* Content */}
                 <div 
                     className="prose prose-invert prose-lg max-w-none prose-headings:font-bold prose-headings:text-white prose-p:text-gray-300 prose-a:text-cyan-400 prose-img:rounded-2xl"
                     dangerouslySetInnerHTML={{ __html: post.content }}

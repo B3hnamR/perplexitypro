@@ -3,32 +3,31 @@ import { prisma } from "@/lib/db";
 import { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-// متادیتای تکمیلی مخصوص صفحه اصلی
 export const metadata: Metadata = {
-  title: "خرید اشتراک Perplexity Pro | تحویل آنی و ارزان",
-  description: "بهترین مرجع خرید اکانت پرپلکسیتی پرو در ایران. دسترسی نامحدود به GPT-5 و Claude 3 با پشتیبانی ۲۴ ساعته.",
+  title: "OrOñUOO_ OO'O¦OñOUc Perplexity Pro | O¦O-U^UOU, O›U+UO U^ OOñOýOU+",
+  description: "O\"UØO¦OñUOU+ U.OñOªO1 OrOñUOO_ OUcOU+O¦ U_OñU_U,UcO3UOO¦UO U_OñU^ O_Oñ OUOOñOU+. O_O3O¦OñO3UO U+OU.O-O_U^O_ O\"UØ GPT-5 U^ Claude 3 O\"O U_O'O¦UOO\"OU+UO UýU' O3OO1O¦UØ.",
 };
 
 export default async function Home() {
   let product = null;
-  
-  try {
-    // دریافت اولین محصول از دیتابیس برای نمایش قیمت و اطلاعات
-    product = await prisma.product.findFirst();
-  } catch (error) {
-    console.error("Failed to load product for home page:", error);
-    // اگر دیتابیس خطا داد، محصول را null می‌گذاریم تا وارد بلوک بعدی شود
-    product = null;
+
+  if (process.env.DATABASE_URL) {
+    try {
+      product = await prisma.product.findFirst();
+    } catch (error) {
+      console.error("Failed to load product for home page:", error);
+      product = null;
+    }
   }
 
-  // ✅ بخش اضافه شده: اگر محصولی در دیتابیس نبود (یا ارور داد)، یک محصول پیش‌فرض می‌سازیم
   if (!product) {
     product = {
         id: "default-pro",
-        name: "اشتراک Perplexity Pro",
-        description: "دسترسی نامحدود به هوش مصنوعی",
-        price: 398000, // قیمت پیش‌فرض برای نمایش در سایت
+        name: "OO'O¦OñOUc Perplexity Pro",
+        description: "O_O3O¦OñO3UO U+OU.O-O_U^O_ O\"UØ UØU^O' U.OæU+U^O1UO",
+        price: 398000,
         imageUrl: "/perplexity-pro-logo.png",
         fileUrl: null,
         createdAt: new Date(),
@@ -36,13 +35,12 @@ export default async function Home() {
     };
   }
 
-  // ✅ ساخت اسکیمای محصول (JSON-LD)
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
-    "name": product.name, // مطمئنیم که product دیگر null نیست
+    "name": product.name,
     "image": "https://perplexitypro.ir/perplexity-pro-share.jpg",
-    "description": product.description || "دسترسی نامحدود به هوش مصنوعی‌های GPT-5, Claude 3 و Gemini Pro",
+    "description": product.description || "O_O3O¦OñO3UO U+OU.O-O_U^O_ O\"UØ UØU^O' U.OæU+U^O1UOƒ?OUØOUO GPT-5, Claude 3 U^ Gemini Pro",
     "brand": {
       "@type": "Brand",
       "name": "Perplexity"
@@ -51,7 +49,7 @@ export default async function Home() {
       "@type": "Offer",
       "url": "https://perplexitypro.ir",
       "priceCurrency": "IRR",
-      "price": product.price * 10, // تبدیل تومان به ریال
+      "price": product.price * 10,
       "availability": "https://schema.org/InStock",
       "seller": {
         "@type": "Organization",
@@ -67,7 +65,6 @@ export default async function Home() {
 
   return (
     <>
-      {/* تزریق اسکیما به صفحه */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

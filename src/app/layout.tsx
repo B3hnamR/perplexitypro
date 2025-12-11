@@ -8,6 +8,10 @@ import ExitPopup from "@/components/ExitPopup";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
 const vazirmatn = Vazirmatn({ 
   subsets: ["arabic", "latin"],
   variable: "--font-vazir",
@@ -42,8 +46,16 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const maintenanceSetting = await prisma.setting.findUnique({ where: { key: "maintenance_mode" } });
-  const isMaintenance = maintenanceSetting?.value === "true";
+  let isMaintenance = false;
+  if (process.env.DATABASE_URL) {
+    try {
+      const maintenanceSetting = await prisma.setting.findUnique({ where: { key: "maintenance_mode" } });
+      isMaintenance = maintenanceSetting?.value === "true";
+    } catch (e) {
+      console.error("Maintenance check failed:", e);
+      isMaintenance = false;
+    }
+  }
   
   const session = await auth();
   const isAdmin = (session?.user as any)?.role === "ADMIN";
