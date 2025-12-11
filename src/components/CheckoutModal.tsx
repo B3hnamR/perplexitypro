@@ -1,10 +1,9 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useState, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { X, ShieldCheck, CreditCard, Wallet, Loader2, ArrowLeft } from "lucide-react";
+import { X, ShieldCheck, Loader2, ArrowLeft, Phone, Lock, CheckCircle } from "lucide-react";
 import { useCart } from "@/context/CartContext";
-import { useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import axios from "axios";
 
@@ -16,42 +15,97 @@ interface CheckoutModalProps {
 }
 
 export default function CheckoutModal({ isOpen, onClose, mode = "CHECKOUT", isCartCheckout = false }: CheckoutModalProps) {
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
     const { total, clearCart, items } = useCart();
-    const router = useRouter();
     
-    const [step, setStep] = useState(1); // 1: Login/Phone, 2: Gateway Select
+    // استیت‌های احراز هویت
+    const [authStep, setAuthStep] = useState(1); // 1: Mobile, 2: OTP
     const [mobile, setMobile] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [otp, setOtp] = useState("");
+    const [otpLoading, setOtpLoading] = useState(false);
     
-    // ✅ استیت انتخاب درگاه (پیش‌فرض زرین‌پال)
+    // استیت‌های پرداخت
+    const [paymentLoading, setPaymentLoading] = useState(false);
     const [selectedGateway, setSelectedGateway] = useState<"ZARINPAL" | "ZIBAL">("ZARINPAL");
 
-    // --- لاجیک‌های لاگین (بدون تغییر) ---
-    const handleSendOtp = async (e: React.FormEvent) => { /* ... کدهای قبلی لاگین ... */ };
-    const handleVerifyOtp = async (e: React.FormEvent) => { /* ... کدهای قبلی تایید ... */ };
+    // ریست کردن استیت وقتی مودال بسته میشه
+    useEffect(() => {
+        if (!isOpen) {
+            setAuthStep(1);
+            setMobile("");
+            setOtp("");
+        }
+    }, [isOpen]);
 
-    // ✅ فانکشن پرداخت جدید
-    const handlePayment = async () => {
-        setLoading(true);
+    // --- توابع لاگین ---
+
+    const handleSendOtp = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (mobile.length !== 11 || !mobile.startsWith("09")) {
+            alert("شماره موبایل معتبر نیست");
+            return;
+        }
+
+        setOtpLoading(true);
         try {
-            // 1. ثبت سفارش اولیه در دیتابیس
+            const res = await axios.post("/api/auth/send-otp", { mobile });
+            if (res.data.success) {
+                setAuthStep(2);
+            } else {
+                alert("خطا در ارسال پیامک");
+            }
+        } catch (error) {
+            alert("خطا در برقراری ارتباط");
+        } finally {
+            setOtpLoading(false);
+        }
+    };
+
+    const handleVerifyOtp = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setOtpLoading(true);
+
+        const res = await signIn("credentials", {
+            mobile,
+            code: otp,
+            redirect: false, // ⚠️ مهم: جلوگیری از ریدایرکت به صفحه لاگین
+        });
+
+        if (res?.error) {
+            alert("کد وارد شده اشتباه است");
+            setOtpLoading(false);
+        } else {
+            // لاگین موفق
+            if (mode === "LOGIN_ONLY") {
+                onClose();
+                window.location.reload(); // رفرش برای اعمال تغییرات هدر
+            }
+            // اگر مود پرداخت باشد، خودکار سوییچ میشه به فرم پرداخت چون session میاد
+            setOtpLoading(false);
+        }
+    };
+
+    // --- توابع پرداخت ---
+
+    const handlePayment = async () => {
+        setPaymentLoading(true);
+        try {
+            // 1. ثبت سفارش
             const orderRes = await axios.post("/api/orders", {
                 items: items,
                 totalAmount: total,
-                gateway: selectedGateway // ذخیره درگاه انتخابی (اختیاری در اوردر)
+                gateway: selectedGateway
             });
 
             const orderId = orderRes.data.orderId;
 
-            // 2. درخواست پرداخت
+            // 2. درخواست درگاه
             const paymentRes = await axios.post("/api/payment/request", {
                 orderId: orderId,
                 gateway: selectedGateway
             });
 
             if (paymentRes.data.url) {
-                // اگر موفق بود، سبد خرید را خالی کن و برو به درگاه
                 clearCart();
                 window.location.href = paymentRes.data.url;
             }
@@ -59,7 +113,7 @@ export default function CheckoutModal({ isOpen, onClose, mode = "CHECKOUT", isCa
         } catch (error) {
             console.error(error);
             alert("خطا در ایجاد سفارش");
-            setLoading(false);
+            setPaymentLoading(false);
         }
     };
 
@@ -92,23 +146,80 @@ export default function CheckoutModal({ isOpen, onClose, mode = "CHECKOUT", isCa
                             <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-3xl bg-[#0f172a] border border-white/10 p-6 text-right align-middle shadow-xl transition-all">
                                 <div className="flex justify-between items-center mb-6">
                                     <h3 className="text-xl font-black text-white">
-                                        {mode === "LOGIN_ONLY" ? "ورود به حساب" : "انتخاب روش پرداخت"}
+                                        {!session ? "ورود / عضویت" : "تکمیل خرید"}
                                     </h3>
                                     <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
                                         <X size={24} />
                                     </button>
                                 </div>
 
-                                {/* اگر کاربر لاگین نیست، فرم لاگین را نشان بده (کد قبلی) */}
+                                {/* ─── بخش لاگین (اگر کاربر مهمان است) ─── */}
                                 {!session ? (
-                                    <div className="space-y-4">
-                                        {/* ... (کدهای فرم لاگین که قبلاً داشتید) ... */}
-                                        {/* برای خلاصه شدن اینجا تکرار نکردم، همان کدهای قبلی را بگذارید */}
-                                        <p className="text-center text-gray-500">لطفا ابتدا وارد شوید</p>
-                                        <button onClick={() => signIn()} className="w-full bg-cyan-600 py-3 rounded-xl font-bold text-white">ورود سریع</button>
+                                    <div>
+                                        {authStep === 1 ? (
+                                            <form onSubmit={handleSendOtp} className="space-y-4">
+                                                <p className="text-sm text-gray-400 mb-4">
+                                                    برای ادامه خرید یا ورود به حساب، شماره موبایل خود را وارد کنید.
+                                                </p>
+                                                <div className="relative">
+                                                    <input 
+                                                        type="tel" 
+                                                        value={mobile}
+                                                        onChange={(e) => setMobile(e.target.value)}
+                                                        className="w-full bg-[#1e293b] border border-white/10 rounded-xl px-4 py-3 pl-10 text-white text-center text-lg tracking-widest focus:border-cyan-500 focus:outline-none"
+                                                        placeholder="09123456789"
+                                                        maxLength={11}
+                                                        autoFocus
+                                                    />
+                                                    <Phone className="absolute left-3 top-3.5 text-gray-500" size={20} />
+                                                </div>
+                                                <button 
+                                                    type="submit" 
+                                                    disabled={otpLoading}
+                                                    className="w-full bg-cyan-600 hover:bg-cyan-500 text-white py-3 rounded-xl font-bold flex justify-center items-center gap-2 transition-all disabled:opacity-50"
+                                                >
+                                                    {otpLoading ? <Loader2 className="animate-spin" /> : "ارسال کد تایید"}
+                                                </button>
+                                            </form>
+                                        ) : (
+                                            <form onSubmit={handleVerifyOtp} className="space-y-4">
+                                                <div className="bg-cyan-500/10 border border-cyan-500/20 p-3 rounded-xl text-center mb-4">
+                                                    <p className="text-xs text-cyan-300 mb-1">کد ارسال شده به شماره:</p>
+                                                    <p className="font-bold text-white tracking-wider">{mobile}</p>
+                                                </div>
+                                                <div className="relative">
+                                                    <input 
+                                                        type="text" 
+                                                        value={otp}
+                                                        onChange={(e) => setOtp(e.target.value)}
+                                                        className="w-full bg-[#1e293b] border border-white/10 rounded-xl px-4 py-3 pl-10 text-white text-center text-2xl tracking-[0.5em] focus:border-emerald-500 focus:outline-none"
+                                                        placeholder="_____"
+                                                        maxLength={5}
+                                                        autoFocus
+                                                    />
+                                                    <Lock className="absolute left-3 top-3.5 text-gray-500" size={20} />
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => setAuthStep(1)}
+                                                        className="px-4 bg-white/5 hover:bg-white/10 text-gray-400 rounded-xl transition-colors"
+                                                    >
+                                                        <ArrowLeft size={20} />
+                                                    </button>
+                                                    <button 
+                                                        type="submit" 
+                                                        disabled={otpLoading}
+                                                        className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold flex justify-center items-center gap-2 transition-all disabled:opacity-50"
+                                                    >
+                                                        {otpLoading ? <Loader2 className="animate-spin" /> : "تایید و ورود"}
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        )}
                                     </div>
                                 ) : (
-                                    // اگر کاربر لاگین است، انتخاب درگاه را نشان بده
+                                    // ─── بخش پرداخت (اگر کاربر لاگین است) ───
                                     <div className="space-y-6">
                                         <div className="bg-cyan-500/10 border border-cyan-500/20 p-4 rounded-2xl flex items-center gap-3">
                                             <ShieldCheck className="text-cyan-400" size={24} />
@@ -176,10 +287,10 @@ export default function CheckoutModal({ isOpen, onClose, mode = "CHECKOUT", isCa
                                             
                                             <button 
                                                 onClick={handlePayment}
-                                                disabled={loading}
+                                                disabled={paymentLoading}
                                                 className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-4 rounded-xl font-bold text-lg shadow-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50"
                                             >
-                                                {loading ? <Loader2 className="animate-spin" /> : <>پرداخت و تکمیل خرید <ArrowLeft size={20}/></>}
+                                                {paymentLoading ? <Loader2 className="animate-spin" /> : <>پرداخت و تکمیل خرید <ArrowLeft size={20}/></>}
                                             </button>
                                         </div>
                                     </div>
