@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
+        unoptimized: true, // avoid writing cache to read-only FS on runtime
         remotePatterns: [
             {
                 protocol: 'https',

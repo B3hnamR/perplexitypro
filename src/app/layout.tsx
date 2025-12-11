@@ -27,10 +27,10 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL("https://perplexitypro.ir"),
   title: {
-    default: "خرید اشتراک Perplexity Pro | دستیار هوش مصنوعی پرپلکسیتی",
-    template: "%s | پرپلکسیتی پرو",
+    default: "پری‌پلکسیتی پرو | دسترسی به مدل‌های برتر هوش مصنوعی",
+    template: "%s | پری‌پلکسیتی پرو",
   },
-  description: "خرید اکانت Perplexity Pro با تحویل آنی. دسترسی نامحدود به GPT-5.1، Claude Sonnet 4.5 و Gemini 3 Pro. بهترین جایگزین ChatGPT پلاس در ایران.",
+  description: "اشتراک پری‌پلکسیتی پرو با دسترسی به GPT-5، Claude Sonnet 4.5 و Gemini 3 Pro؛ هوش مصنوعی سریع و قابل اتکا برای تحقیق، تولید محتوا و تحلیل.",
   robots: {
     index: true,
     follow: true,
@@ -69,8 +69,8 @@ export default async function RootLayout({
              <MaintenanceScreen />
           ) : (
              <>
-                <HeaderWrapper /> {/* ✅ مدیریت هدر و اعلانات یکجا */}
-                <ExitPopup /> {/* ✅ اینجا اضافه شد */}
+                <HeaderWrapper />
+                <ExitPopup />
                 {children}
              </>
           )}
