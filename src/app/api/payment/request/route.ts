@@ -9,37 +9,38 @@ export async function POST(req: Request) {
 
     try {
         const body = await req.json();
-        const { gateway, orderId } = body; // gateway: "ZARINPAL" | "ZIBAL"
+        const { gateway, orderId } = body;
 
-        // 1. پیدا کردن سفارش
+        // 1. دریافت سفارش
         const order = await prisma.order.findUnique({
             where: { id: orderId },
             include: { user: true }
         });
 
-        if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
-        if (order.status === "PAID") return NextResponse.json({ error: "Already paid" }, { status: 400 });
-
-        // 2. ساخت لینک بازگشت (Callback)
-        // ما gateway و orderId را در URL میگذاریم تا موقع برگشت بدانیم چه خبر است
+        if (!order) return NextResponse.json({ error: "سفارش یافت نشد" }, { status: 404 });
+        
+        // 2. ساخت لینک بازگشت
+        // ⚠️ نکته مهم: درگاه‌های بانکی معمولاً به localhost وریفای نمی‌دهند
         const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/verify?gateway=${gateway}&orderId=${order.id}`;
 
         // 3. درخواست به درگاه
         const paymentRes = await paymentProvider.request({
-            gateway: gateway,
+            gateway: gateway as "ZARINPAL" | "ZIBAL",
             amount: order.amount,
-            description: `سفارش ${order.trackingCode} - Perplexity Pro`,
+            description: `Order ${order.trackingCode}`,
             mobile: order.customerPhone || session.user?.mobile || "",
             callbackUrl: callbackUrl
         });
 
-        // 4. (اختیاری) ذخیره Authority در سفارش برای پیگیری‌های بعدی
-        // فعلاً نیازی نیست چون در Callback داریمش
-
-        return NextResponse.json({ url: paymentRes.url });
+        if (paymentRes?.url) {
+            return NextResponse.json({ url: paymentRes.url });
+        } else {
+            return NextResponse.json({ error: "دریافت لینک پرداخت ناموفق بود" }, { status: 500 });
+        }
 
     } catch (error: any) {
-        console.error("Payment Request Error:", error.message);
-        return NextResponse.json({ error: "خطا در اتصال به درگاه پرداخت" }, { status: 500 });
+        console.error("❌ Payment Request API Error:", error.message);
+        // اینجا متن دقیق ارور را برمی‌گردانیم تا در مودال نمایش داده شود
+        return NextResponse.json({ error: error.message || "خطا در اتصال به درگاه" }, { status: 500 });
     }
 }
