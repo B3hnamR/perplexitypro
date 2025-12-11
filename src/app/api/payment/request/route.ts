@@ -46,7 +46,7 @@ export async function POST(req: Request) {
             await prisma.order.update({
                 where: { id: order.id },
                 data: {
-                    refId: paymentRes.authority,
+                    refId: String(paymentRes.authority),
                     customData: JSON.stringify(customData)
                 }
             });
