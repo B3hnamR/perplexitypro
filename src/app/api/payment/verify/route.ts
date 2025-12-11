@@ -4,7 +4,6 @@ import { sendAdminAlert, sendOrderNotification } from "@/lib/sms";
 import { redirect } from "next/navigation";
 import { NextRequest } from "next/server";
 
-// چون این روت داینامیک است و کوئری پارامتر دارد، باید Force Dynamic باشد
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
@@ -12,34 +11,40 @@ export async function GET(req: NextRequest) {
     const gateway = searchParams.get("gateway") as "ZARINPAL" | "ZIBAL";
     const orderId = searchParams.get("orderId");
     
-    // پارامترهای بازگشتی از درگاه‌ها
-    const authority = searchParams.get("Authority") || searchParams.get("trackId"); // زرین‌پال Authority میدهد، زیبال trackId
-    const status = searchParams.get("Status"); // وضعیت زرین‌پال (OK/NOK)
-    const success = searchParams.get("success"); // وضعیت زیبال (1/0)
+    const authority = searchParams.get("Authority") || searchParams.get("trackId");
+    const status = searchParams.get("Status");
+    const success = searchParams.get("success");
 
-    // بررسی اولیه: آیا کاربر انصراف داده؟
-    const isCanceled = (gateway === "ZARINPAL" && status !== "OK") || (gateway === "ZIBAL" && success !== "1");
-
-    if (!orderId || !authority || isCanceled) {
-        return redirect(`/payment/result?status=failed&message=پرداخت توسط کاربر لغو شد`);
-    }
+    // متغیر برای ذخیره آدرس نهایی ریدایرکت
+    let destinationUrl = "";
 
     try {
-        // 1. یافتن سفارش در دیتابیس
+        // 1. بررسی انصراف کاربر
+        const isCanceled = (gateway === "ZARINPAL" && status !== "OK") || (gateway === "ZIBAL" && success !== "1");
+
+        if (!orderId || !authority || isCanceled) {
+            const msg = encodeURIComponent("پرداخت توسط کاربر لغو شد");
+            destinationUrl = `/payment/result?status=failed&message=${msg}`;
+            throw new Error("Canceled"); // پرش به مرحله نهایی
+        }
+
+        // 2. یافتن سفارش
         const order = await prisma.order.findUnique({ 
             where: { id: orderId } 
         });
 
         if (!order) {
-            return redirect("/?error=order_not_found");
+            const msg = encodeURIComponent("سفارش یافت نشد");
+            destinationUrl = `/?error=${msg}`;
+            throw new Error("Order Not Found");
         }
         
-        // اگر سفارش قبلاً پرداخت شده، نیازی به تایید مجدد نیست
         if (order.status === "PAID") {
-            return redirect(`/payment/result?status=success&orderId=${orderId}`);
+            destinationUrl = `/payment/result?status=success&orderId=${orderId}`;
+            throw new Error("Already Paid"); // پرش به مرحله نهایی (با موفقیت)
         }
 
-        // 2. تایید نهایی تراکنش با درگاه (Verify)
+        // 3. تایید نهایی (Verify)
         const verifyRes = await paymentProvider.verify({
             gateway,
             amount: order.amount,
@@ -47,22 +52,18 @@ export async function GET(req: NextRequest) {
         });
 
         if (verifyRes.success) {
-            // ✅ پرداخت موفق بود
-
-            // تولید توکن دانلود یکتا (اگر قبلاً نداشته باشد)
+            // ✅ موفقیت
             const downloadToken = order.downloadToken || Math.random().toString(36).substring(7);
 
-            // 3. آپدیت وضعیت سفارش به پرداخت شده
             await prisma.order.update({
                 where: { id: orderId },
                 data: {
                     status: "PAID",
-                    refId: verifyRes.refId ? String(verifyRes.refId) : null, // شماره پیگیری بانک
+                    refId: verifyRes.refId ? String(verifyRes.refId) : null,
                     downloadToken: downloadToken,
                 }
             });
             
-            // 4. کسر سهمیه کد تخفیف (اگر استفاده شده باشد)
             if (order.discountCodeId) {
                 await prisma.discountCode.update({
                     where: { id: order.discountCodeId },
@@ -70,23 +71,28 @@ export async function GET(req: NextRequest) {
                 });
             }
 
-            // 5. ارسال پیامک اطلاع‌رسانی
-            if (order.customerPhone) {
-                // ارسال پیامک موفقیت به مشتری
-                await sendOrderNotification(order.customerPhone, order.trackingCode || "N/A");
-            }
-            // ارسال پیامک فروش جدید به ادمین
-            await sendAdminAlert(order.amount);
+            // ارسال پیامک (بدون منتظر ماندن برای افزایش سرعت)
+            if (order.customerPhone) sendOrderNotification(order.customerPhone, order.trackingCode || "N/A");
+            sendAdminAlert(order.amount);
 
-            // 6. هدایت به صفحه نتیجه موفق
-            return redirect(`/payment/result?status=success&orderId=${orderId}`);
+            destinationUrl = `/payment/result?status=success&orderId=${orderId}`;
         } else {
-            // ❌ پرداخت ناموفق بود
-            return redirect(`/payment/result?status=failed&message=تراکنش توسط بانک تایید نشد`);
+            // ❌ شکست در وریفای
+            const msg = encodeURIComponent("تراکنش توسط بانک تایید نشد");
+            destinationUrl = `/payment/result?status=failed&message=${msg}`;
         }
 
-    } catch (error) {
-        console.error("Payment Verify Error:", error);
-        return redirect(`/payment/result?status=failed&message=خطای فنی در پردازش پرداخت`);
+    } catch (error: any) {
+        // اگر ارور ما "Canceled" یا "Already Paid" نبود، یعنی خطای واقعی رخ داده
+        if (error.message !== "Canceled" && error.message !== "Already Paid" && error.message !== "Order Not Found") {
+            console.error("Payment Verify Error:", error);
+            const msg = encodeURIComponent("خطای فنی در پردازش پرداخت");
+            destinationUrl = `/payment/result?status=failed&message=${msg}`;
+        }
+    }
+
+    // 🚀 ریدایرکت نهایی (بیرون از Try/Catch تا ارور NEXT_REDIRECT ندهد)
+    if (destinationUrl) {
+        return redirect(destinationUrl);
     }
 }
