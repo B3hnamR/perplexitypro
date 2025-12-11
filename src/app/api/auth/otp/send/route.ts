@@ -1,11 +1,27 @@
 import { prisma } from "@/lib/db";
 import { sendOTP } from "@/lib/sms";
 import { NextResponse } from "next/server";
+import { rateLimit } from "@/lib/rate-limit"; // ایمپورت ریت لیمیت
+import { headers } from "next/headers"; // برای گرفتن IP
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
     try {
+        // 1. بررسی Rate Limit (جلوگیری از SMS Bombing)
+        const headersList = await headers();
+        const ip = headersList.get("x-forwarded-for") || "unknown";
+        
+        // مثلا: ۳ درخواست در هر ۲ دقیقه مجاز است
+        const isAllowed = rateLimit(ip, 3, 2 * 60 * 1000); 
+
+        if (!isAllowed) {
+            return NextResponse.json(
+                { error: "تعداد درخواست‌های شما بیش از حد مجاز است. لطفاً چند دقیقه صبر کنید." },
+                { status: 429 }
+            );
+        }
+
         const { mobile } = await req.json();
         
         if (!mobile || !/^09\d{9}$/.test(mobile)) {
@@ -20,6 +36,7 @@ export async function POST(req: Request) {
         const code = Math.floor(10000 + Math.random() * 90000).toString();
         const expiresAt = new Date(Date.now() + 2 * 60 * 1000); 
 
+        // ذخیره کد در دیتابیس
         await prisma.oTP.upsert({
             where: { mobile },
             update: { code, expiresAt },
@@ -29,10 +46,9 @@ export async function POST(req: Request) {
         const sent = await sendOTP(mobile, code);
 
         if (sent) {
-            // ✅ برگرداندن وضعیت کاربر (آیا جدید است؟)
             return NextResponse.json({ 
                 success: true, 
-                isNewUser: !existingUser // اگر کاربر پیدا نشد، یعنی جدید است
+                isNewUser: !existingUser
             });
         } else {
             if (process.env.NODE_ENV !== "production") {

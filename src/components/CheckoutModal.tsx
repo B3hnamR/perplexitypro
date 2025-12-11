@@ -6,6 +6,7 @@ import { X, ShieldCheck, Loader2, ArrowLeft, Phone, Lock, AlertCircle } from "lu
 import { useCart } from "@/context/CartContext";
 import { signIn, useSession } from "next-auth/react";
 import axios from "axios";
+import { useRouter } from "next/navigation"; // ✅ اضافه شده
 
 interface CheckoutModalProps {
     isOpen: boolean;
@@ -17,13 +18,14 @@ interface CheckoutModalProps {
 export default function CheckoutModal({ isOpen, onClose, mode = "CHECKOUT", isCartCheckout = false }: CheckoutModalProps) {
     const { data: session } = useSession();
     const { total, clearCart, items } = useCart();
+    const router = useRouter(); // ✅ اضافه شده
     
     // استیت‌های احراز هویت
     const [authStep, setAuthStep] = useState(1); // 1: Mobile, 2: OTP
     const [mobile, setMobile] = useState("");
     const [otp, setOtp] = useState("");
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(""); // برای نمایش ارور داخل مودال
+    const [error, setError] = useState(""); 
     
     // استیت‌های پرداخت
     const [selectedGateway, setSelectedGateway] = useState<"ZARINPAL" | "ZIBAL">("ZARINPAL");
@@ -51,15 +53,15 @@ export default function CheckoutModal({ isOpen, onClose, mode = "CHECKOUT", isCa
 
         setLoading(true);
         try {
-            // ✅ ارسال به مسیر جدید که تداخل ندارد
-            const res = await axios.post("/api/otp/send", { mobile });
+            const res = await axios.post("/api/auth/otp/send", { mobile }); // ✅ آدرس دقیق
             if (res.data.success) {
                 setAuthStep(2);
             } else {
                 setError("خطا در ارسال پیامک. لطفا مجدد تلاش کنید.");
             }
-        } catch (error) {
-            setError("خطا در برقراری ارتباط با سرور");
+        } catch (error: any) {
+            // نمایش خطای دقیق اگر از سمت سرور (مثلا ریت لیمیت) آمده باشد
+            setError(error.response?.data?.error || "خطا در برقراری ارتباط با سرور");
         } finally {
             setLoading(false);
         }
@@ -73,7 +75,7 @@ export default function CheckoutModal({ isOpen, onClose, mode = "CHECKOUT", isCa
         const res = await signIn("credentials", {
             mobile,
             code: otp,
-            redirect: false, // جلوگیری از ریدایرکت خودکار
+            redirect: false,
         });
 
         if (res?.error) {
@@ -82,7 +84,8 @@ export default function CheckoutModal({ isOpen, onClose, mode = "CHECKOUT", isCa
         } else {
             // موفقیت
             if (mode === "LOGIN_ONLY") {
-                window.location.reload();
+                onClose(); // بستن مودال
+                router.refresh(); // ✅ رفرش نرم برای دریافت سشن جدید
             }
             setLoading(false);
         }
@@ -94,12 +97,15 @@ export default function CheckoutModal({ isOpen, onClose, mode = "CHECKOUT", isCa
         setLoading(true);
         setError("");
         try {
+            // 1. ثبت سفارش اولیه
             const orderRes = await axios.post("/api/orders", {
                 items: items,
-                totalAmount: total,
-                gateway: selectedGateway
+                totalAmount: total, // (در سرور دوباره محاسبه می‌شود اما برای پاس دادن گیت‌وی لازم است)
+                gateway: selectedGateway,
+                // couponCode: ... (اگر کد تخفیف دارید اینجا پاس دهید)
             });
 
+            // 2. درخواست لینک پرداخت
             const paymentRes = await axios.post("/api/payment/request", {
                 orderId: orderRes.data.orderId,
                 gateway: selectedGateway
@@ -143,7 +149,6 @@ export default function CheckoutModal({ isOpen, onClose, mode = "CHECKOUT", isCa
                             leaveTo="opacity-0 scale-95"
                         >
                             <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-3xl bg-[#0f172a] border border-white/10 p-6 text-right align-middle shadow-xl transition-all relative">
-                                {/* Header */}
                                 <div className="flex justify-between items-center mb-8 border-b border-white/5 pb-4">
                                     <h3 className="text-xl font-black text-white">
                                         {!session ? "ورود به حساب کاربری" : "انتخاب درگاه پرداخت"}
@@ -153,7 +158,6 @@ export default function CheckoutModal({ isOpen, onClose, mode = "CHECKOUT", isCa
                                     </button>
                                 </div>
 
-                                {/* نمایش خطا بجای Alert */}
                                 {error && (
                                     <div className="mb-6 bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-xl flex items-center gap-2 text-sm animate-pulse">
                                         <AlertCircle size={18} />
@@ -161,7 +165,6 @@ export default function CheckoutModal({ isOpen, onClose, mode = "CHECKOUT", isCa
                                     </div>
                                 )}
 
-                                {/* --- 1. بخش لاگین --- */}
                                 {!session ? (
                                     <div>
                                         {authStep === 1 ? (
@@ -226,7 +229,6 @@ export default function CheckoutModal({ isOpen, onClose, mode = "CHECKOUT", isCa
                                         )}
                                     </div>
                                 ) : (
-                                    // --- 2. بخش انتخاب درگاه ---
                                     <div className="space-y-6 animate-fade-in">
                                         <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-2xl flex items-center gap-4">
                                             <div className="bg-blue-500 p-2 rounded-xl text-white shadow-lg shadow-blue-500/30">
