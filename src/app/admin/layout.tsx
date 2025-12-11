@@ -8,14 +8,11 @@ export default async function AdminLayout({
     children: React.ReactNode;
 }) {
     const session = await auth();
-
-    // اگر کاربر لاگین نیست، بفرست به صفحه لاگین جدید
-    if (!session) {
+    if (!session || session.user?.role !== "ADMIN") {
         redirect("/auth/login");
     }
 
     return (
-        // کلاس select-text اینجا اضافه شد تا قابلیت انتخاب متن فقط در ادمین فعال شود
         <div className="flex min-h-screen bg-[#0f172a] text-white font-sans select-text">
             <div className="hidden lg:block w-64 flex-shrink-0">
                 <div className="fixed inset-y-0 w-64">

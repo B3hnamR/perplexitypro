@@ -2,6 +2,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
 
+type CartItem = { id: string; quantity: number };
+
 export async function POST(req: Request) {
     const session = await auth();
     if (!session) {
@@ -12,7 +14,6 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { items, gateway, couponCode } = body;
 
-        // دریافت اطلاعات کاربر
         const user = await prisma.user.findUnique({
             where: { id: session.user?.id }
         });
@@ -21,34 +22,52 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
-        // ۱. محاسبه دقیق قیمت در سمت سرور
-        let calculatedAmount = 0;
-        let quantityTotal = 0;
-
         if (!items || !Array.isArray(items) || items.length === 0) {
             return NextResponse.json({ error: "سبد خرید خالی است" }, { status: 400 });
         }
 
-        for (const item of items) {
-            const product = await prisma.product.findUnique({ where: { id: item.id } });
-            if (product) {
-                calculatedAmount += product.price * item.quantity;
-                quantityTotal += item.quantity;
-            }
+        const sanitizedItems: CartItem[] = items.map((item: any) => ({
+            id: String(item.id || "").trim(),
+            quantity: Number(item.quantity || 0)
+        })).filter((item: CartItem) => item.id && Number.isInteger(item.quantity) && item.quantity > 0);
+
+        if (sanitizedItems.length !== items.length) {
+            return NextResponse.json({ error: "آیتم‌های سبد خرید نامعتبر است" }, { status: 400 });
         }
 
-        // ۲. اعمال کد تخفیف (در صورت وجود)
-        let discountId = null;
+        const productIds = sanitizedItems.map((i) => i.id);
+        const products = await prisma.product.findMany({
+            where: { id: { in: productIds } }
+        });
+
+        if (products.length !== productIds.length) {
+            return NextResponse.json({ error: "بخشی از محصولات یافت نشد" }, { status: 400 });
+        }
+
+        let calculatedAmount = 0;
+        let quantityTotal = 0;
+
+        for (const item of sanitizedItems) {
+            const product = products.find((p) => p.id === item.id);
+            calculatedAmount += (product?.price || 0) * item.quantity;
+            quantityTotal += item.quantity;
+        }
+
+        if (calculatedAmount <= 0 || quantityTotal <= 0) {
+            return NextResponse.json({ error: "مبلغ سفارش نامعتبر است" }, { status: 400 });
+        }
+
+        const originalAmount = calculatedAmount;
+
+        let discountId: string | null = null;
         if (couponCode) {
             const coupon = await prisma.discountCode.findUnique({ where: { code: couponCode } });
             
-            // اعتبارسنجی کد تخفیف
             if (coupon && coupon.isActive) {
                 const isExpired = coupon.expiresAt && new Date() > coupon.expiresAt;
                 const isLimitReached = coupon.maxUses && coupon.usedCount >= coupon.maxUses;
                 const isMinPriceMet = !coupon.minOrderPrice || calculatedAmount >= coupon.minOrderPrice;
 
-                // بررسی سقف استفاده برای کاربر خاص
                 let userLimitReached = false;
                 if (coupon.maxUsesPerUser) {
                     const userUsage = await prisma.order.count({
@@ -78,14 +97,17 @@ export async function POST(req: Request) {
             }
         }
 
-        // تولید کد پیگیری رندوم
+        if (calculatedAmount <= 0) {
+            return NextResponse.json({ error: "مبلغ نهایی سفارش نامعتبر است" }, { status: 400 });
+        }
+
         const trackingCode = "ORD-" + Math.floor(100000 + Math.random() * 900000);
 
-        // ۳. ایجاد سفارش با قیمت محاسبه شده و مطمئن
         const order = await prisma.order.create({
             data: {
                 userId: user.id,
-                amount: calculatedAmount, // ✅ استفاده از قیمت محاسبه شده
+                amount: calculatedAmount,
+                originalAmount,
                 quantity: quantityTotal,
                 status: "PENDING",
                 trackingCode: trackingCode,
@@ -99,6 +121,6 @@ export async function POST(req: Request) {
 
     } catch (error) {
         console.error("Create Order Error:", error);
-        return NextResponse.json({ error: "خطا در ثبت سفارش" }, { status: 500 });
+        return NextResponse.json({ error: "خطای داخلی در ایجاد سفارش" }, { status: 500 });
     }
 }
