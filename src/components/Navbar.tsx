@@ -3,13 +3,14 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Menu, X, Brain, User, LogOut, ChevronDown, LayoutDashboard, ShoppingCart, ListOrdered, Phone } from "lucide-react";
+import { Menu, X, Brain, User, LogOut, ChevronDown, LayoutDashboard, ShoppingCart, ListOrdered, Phone, Loader2, BookOpen } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useCart } from "@/context/CartContext";
 import CheckoutModal from "./CheckoutModal";
+import axios from "axios"; // ✅ اضافه شد
 
 interface NavbarProps {
-    isWrapperMode?: boolean; // ✅ پراپ جدید برای تشخیص حالت نمایش
+    isWrapperMode?: boolean;
 }
 
 export default function Navbar({ isWrapperMode = false }: NavbarProps) {
@@ -21,15 +22,35 @@ export default function Navbar({ isWrapperMode = false }: NavbarProps) {
     const [scrolled, setScrolled] = useState(false);
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const [buyingLoading, setBuyingLoading] = useState(false); // ✅ لودینگ برای دکمه خرید
+    
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const handlePreOrder = () => {
-        addItem({
-            id: "perplexity-pro-1year",
-            name: "Perplexity Pro Subscription",
-            price: 398000
-        });
-        router.push("/cart");
+    // ✅ تابع جدید: دریافت قیمت واقعی و افزودن به سبد خرید
+    const handleBuySubscription = async () => {
+        setBuyingLoading(true);
+        try {
+            // 1. دریافت قیمت لحظه‌ای از سرور
+            const res = await axios.get("/api/product/main");
+            const product = res.data;
+
+            if (product) {
+                // 2. افزودن به سبد خرید با قیمت درست
+                addItem({
+                    id: product.id,
+                    name: product.name,
+                    price: product.price
+                });
+                
+                // 3. هدایت به سبد خرید
+                router.push("/cart");
+                setIsUserMenuOpen(false);
+            }
+        } catch (error) {
+            alert("خطا در دریافت اطلاعات محصول. لطفا صفحه را رفرش کنید.");
+        } finally {
+            setBuyingLoading(false);
+        }
     };
 
     useEffect(() => {
@@ -49,7 +70,6 @@ export default function Navbar({ isWrapperMode = false }: NavbarProps) {
         };
     }, []);
 
-    // ✅ انتخاب کلاس‌ها بر اساس اینکه آیا داخل Wrapper هستیم یا نه
     const navContainerClass = isWrapperMode 
         ? `w-full transition-all duration-300 ${scrolled ? 'bg-[#0f172a]/95 backdrop-blur-xl border-b border-white/10 shadow-lg' : 'bg-transparent'}`
         : `fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[#0f172a]/95 backdrop-blur-xl border-b border-white/10 shadow-lg' : 'bg-transparent'}`;
@@ -74,6 +94,8 @@ export default function Navbar({ isWrapperMode = false }: NavbarProps) {
                         <div className="hidden md:flex items-center gap-1 bg-white/5 p-1.5 rounded-2xl border border-white/5 backdrop-blur-sm">
                             <Link href="/#features" className="text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 px-4 py-2 rounded-xl transition-all">ویژگی‌ها</Link>
                             <Link href="/#pricing" className="text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 px-4 py-2 rounded-xl transition-all">قیمت‌ها</Link>
+                            {/* ✅ لینک وبلاگ اضافه شد */}
+                            <Link href="/blog" className="text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 px-4 py-2 rounded-xl transition-all">وبلاگ</Link>
                             <Link href="/track" className="text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 px-4 py-2 rounded-xl transition-all">پیگیری سفارش</Link>
                             <Link href="/contact" className="text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 px-4 py-2 rounded-xl transition-all flex items-center gap-2">
                                 <Phone size={14} className="text-cyan-400" /> تماس با ما
@@ -106,7 +128,7 @@ export default function Navbar({ isWrapperMode = false }: NavbarProps) {
 
                                     {/* Dropdown Menu */}
                                     {isUserMenuOpen && (
-                                        <div className="absolute left-0 mt-3 w-56 bg-[#1e293b] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up origin-top-left z-50 p-1.5">
+                                        <div className="absolute left-0 mt-3 w-64 bg-[#1e293b] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up origin-top-left z-50 p-1.5">
                                             {(session.user as any).role === "ADMIN" && (
                                                 <Link href="/admin/dashboard" className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white rounded-xl transition-colors">
                                                     <LayoutDashboard size={18} className="text-cyan-400"/>
@@ -120,8 +142,13 @@ export default function Navbar({ isWrapperMode = false }: NavbarProps) {
                                             </Link>
 
                                             {(session.user as any).role !== "ADMIN" && (
-                                                 <button onClick={handlePreOrder} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white rounded-xl transition-colors text-right">
-                                                    <User size={18} className="text-purple-400"/>
+                                                 // ✅ دکمه خرید هوشمند جایگزین شد
+                                                 <button 
+                                                    onClick={handleBuySubscription} 
+                                                    disabled={buyingLoading}
+                                                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white rounded-xl transition-colors text-right"
+                                                >
+                                                    {buyingLoading ? <Loader2 className="animate-spin text-purple-400" size={18}/> : <User size={18} className="text-purple-400"/>}
                                                     خرید اشتراک جدید
                                                 </button>
                                             )}
@@ -169,6 +196,8 @@ export default function Navbar({ isWrapperMode = false }: NavbarProps) {
                     <div className="md:hidden bg-[#0f172a] border-b border-white/10 px-4 pt-2 pb-6 space-y-2 animate-fade-in shadow-2xl">
                         <Link href="/#features" className="block text-gray-300 py-3 px-4 rounded-xl hover:bg-white/5 hover:text-cyan-400 transition-colors" onClick={() => setIsOpen(false)}>ویژگی‌ها</Link>
                         <Link href="/#pricing" className="block text-gray-300 py-3 px-4 rounded-xl hover:bg-white/5 hover:text-cyan-400 transition-colors" onClick={() => setIsOpen(false)}>قیمت‌ها</Link>
+                        {/* ✅ لینک وبلاگ موبایل */}
+                        <Link href="/blog" className="block text-gray-300 py-3 px-4 rounded-xl hover:bg-white/5 hover:text-cyan-400 transition-colors" onClick={() => setIsOpen(false)}>وبلاگ</Link>
                         <Link href="/track" className="block text-gray-300 py-3 px-4 rounded-xl hover:bg-white/5 hover:text-cyan-400 transition-colors" onClick={() => setIsOpen(false)}>پیگیری سفارش</Link>
                         <Link href="/contact" className="block text-gray-300 py-3 px-4 rounded-xl hover:bg-white/5 hover:text-cyan-400 transition-colors" onClick={() => setIsOpen(false)}>تماس با ما</Link>
                         
