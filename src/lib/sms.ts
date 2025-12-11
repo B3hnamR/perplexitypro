@@ -41,10 +41,12 @@ export async function sendOTP(mobile: string, code: string) {
 }
 
 export async function sendOrderNotification(mobile: string, trackingCode: string) {
-    return sendSmsIrVerify(mobile, TEMPLATES.ORDER, [{ name: "id", value: trackingCode }]);
+    // Template placeholder: #TRACKINGCODE#
+    return sendSmsIrVerify(mobile, TEMPLATES.ORDER, [{ name: "TRACKINGCODE", value: trackingCode }]);
 }
 
 export async function sendAdminAlert(amount: number) {
     if (!ADMIN_MOBILE) return false;
-    return sendSmsIrVerify(ADMIN_MOBILE, TEMPLATES.ADMIN, [{ name: "value", value: amount.toLocaleString("fa-IR") }]);
+    // Template placeholder: #AMOUNT#
+    return sendSmsIrVerify(ADMIN_MOBILE, TEMPLATES.ADMIN, [{ name: "AMOUNT", value: amount.toLocaleString("fa-IR") }]);
 }
