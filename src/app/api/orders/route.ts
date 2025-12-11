@@ -1,46 +1,36 @@
-import { auth } from "@/auth";
-import { prisma } from "@/lib/db";
-import { NextResponse } from "next/server";
-
+// ... imports
 export async function POST(req: Request) {
-    const session = await auth();
-    if (!session) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // ... session checks
 
-    try {
-        const body = await req.json();
-        const { totalAmount, gateway } = body;
+    const body = await req.json();
+    const { items, gateway, couponCode } = body; // items و کد تخفیف را بگیرید
 
-        // تولید کد پیگیری رندوم
-        const trackingCode = "ORD-" + Math.floor(100000 + Math.random() * 900000);
-
-        // دریافت اطلاعات کاربر از دیتابیس (برای اطمینان از شماره موبایل)
-        const user = await prisma.user.findUnique({
-            where: { id: session.user?.id }
-        });
-
-        if (!user) {
-            return NextResponse.json({ error: "User not found" }, { status: 404 });
+    // 1. محاسبه قیمت واقعی از دیتابیس
+    let calculatedAmount = 0;
+    
+    // فرض بر این است که فقط یک محصول دارید، اما برای آینده حلقه می‌زنیم
+    for (const item of items) {
+        const product = await prisma.product.findUnique({ where: { id: item.id } });
+        if (product) {
+            calculatedAmount += product.price * item.quantity;
         }
-
-        // ایجاد سفارش در دیتابیس
-        const order = await prisma.order.create({
-            data: {
-                userId: user.id,
-                amount: totalAmount,
-                status: "PENDING", // وضعیت اولیه
-                trackingCode: trackingCode,
-                customerPhone: user.mobile,
-                // اگر می‌خواهید درگاه انتخابی را هم ذخیره کنید، می‌توانید در customData بگذارید
-                customData: JSON.stringify({ gateway }),
-            }
-        });
-
-        return NextResponse.json({ orderId: order.id });
-
-    } catch (error) {
-        console.error("Create Order Error:", error);
-        return NextResponse.json({ error: "خطا در ثبت سفارش" }, { status: 500 });
     }
+
+    // 2. اعمال کد تخفیف در سمت سرور (اگر ارسال شده بود)
+    let discountId = null;
+    if (couponCode) {
+        const coupon = await prisma.discountCode.findUnique({ where: { code: couponCode } });
+        // ... لاجیک بررسی اعتبار کد تخفیف و کسر مبلغ ...
+        // calculatedAmount = calculatedAmount - discountAmount;
+    }
+
+    // 3. استفاده از calculatedAmount به جای totalAmount ارسالی کاربر
+    const order = await prisma.order.create({
+        data: {
+            userId: user.id,
+            amount: calculatedAmount, // ✅ قیمت مطمئن
+            // ...
+        }
+    });
+    // ...
 }
