@@ -6,8 +6,8 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: "OrOñUOO_ OO'O¦OñOUc Perplexity Pro | O¦O-U^UOU, O›U+UO U^ OOñOýOU+",
-  description: "O\"UØO¦OñUOU+ U.OñOªO1 OrOñUOO_ OUcOU+O¦ U_OñU_U,UcO3UOO¦UO U_OñU^ O_Oñ OUOOñOU+. O_O3O¦OñO3UO U+OU.O-O_U^O_ O\"UØ GPT-5 U^ Claude 3 O\"O U_O'O¦UOO\"OU+UO UýU' O3OO1O¦UØ.",
+  title: "پری‌پلکسیتی پرو | دسترسی به مدل‌های برتر هوش مصنوعی",
+  description: "اشتراک پری‌پلکسیتی پرو با دسترسی به GPT-5، Claude Sonnet 4.5 و Gemini 3 Pro؛ هوش مصنوعی سریع و قابل اتکا برای تحقیق، تولید محتوا و تحلیل.",
 };
 
 export default async function Home() {
