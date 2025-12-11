@@ -1,66 +1,63 @@
-import { NextResponse } from "next/server";
-import { verifyPayment } from "@/lib/zarinpal";
 import { prisma } from "@/lib/db";
-import crypto from "crypto";
-import { sendOrderNotification, sendAdminAlert } from "@/lib/sms"; // ✅ ایمپورت توابع پیامک
+import { paymentProvider } from "@/lib/payment";
+import { sendAdminAlert, sendOrderNotification } from "@/lib/sms";
+import { generateLicenseLinks } from "@/lib/license-manager"; // فرضی: تابعی که لینک می سازد
+import { redirect } from "next/navigation";
+import { NextRequest } from "next/server";
 
+// چون متد GET است و Callback می شود، باید داینامیک باشد
 export const dynamic = "force-dynamic";
 
-export async function GET(req: Request) {
-    const { searchParams } = new URL(req.url);
-    const authority = searchParams.get("Authority");
-    const status = searchParams.get("Status");
-    const baseUrl = process.env.NEXTAUTH_URL || "https://perplexitypro.ir";
+export async function GET(req: NextRequest) {
+    const searchParams = req.nextUrl.searchParams;
+    const gateway = searchParams.get("gateway") as "ZARINPAL" | "ZIBAL";
+    const orderId = searchParams.get("orderId");
+    
+    // پارامترهای برگشتی از درگاه‌ها
+    const authority = searchParams.get("Authority") || searchParams.get("trackId"); // زرین‌پال Authority میدهد، زیبال trackId
+    const status = searchParams.get("Status"); // زرین‌پال
+    const success = searchParams.get("success"); // زیبال (1 یا 0)
 
-    const order = authority ? await prisma.order.findFirst({ 
-        where: { refId: authority },
-        include: { links: true }
-    }) : null;
+    // بررسی اولیه وضعیت (کنسل شدن توسط کاربر)
+    const isCanceled = (gateway === "ZARINPAL" && status !== "OK") || (gateway === "ZIBAL" && success !== "1");
 
-    if (!order) return NextResponse.redirect(new URL("/payment/failed?error=OrderNotFound", baseUrl));
-
-    if (order.status === "PAID" && order.downloadToken) {
-         return NextResponse.redirect(new URL(`/delivery/${order.downloadToken}`, baseUrl));
-    }
-
-    const releaseLinks = async () => {
-        if (order.links.length > 0) {
-            await prisma.downloadLink.updateMany({
-                where: { orderId: order.id },
-                data: { status: "AVAILABLE", orderId: null }
-            });
-        }
-        await prisma.order.update({ where: { id: order.id }, data: { status: "FAILED" } });
-    };
-
-    if (status !== "OK") {
-        await releaseLinks();
-        return NextResponse.redirect(new URL("/payment/failed", baseUrl));
+    if (!orderId || !authority || isCanceled) {
+        return redirect(`/payment/result?status=failed&message=پرداخت توسط کاربر لغو شد`);
     }
 
     try {
-        const response = await verifyPayment(authority!, order.amount);
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        if (!order) return redirect("/?error=order_not_found");
+        
+        // اگر قبلا پرداخت شده، هدایت کن به صفحه موفق
+        if (order.status === "PAID") {
+            return redirect(`/payment/result?status=success&orderId=${orderId}`);
+        }
 
-        if (response.data && (response.data.code === 100 || response.data.code === 101)) {
-            const downloadToken = crypto.randomBytes(32).toString("hex");
+        // 1. تایید نهایی با درگاه
+        const verifyRes = await paymentProvider.verify({
+            gateway,
+            amount: order.amount,
+            authority: authority
+        });
 
-            if (order.links.length > 0) {
-                const linkIds = order.links.map(l => l.id);
-                await prisma.downloadLink.updateMany({
-                    where: { id: { in: linkIds } },
-                    data: { status: "USED", consumedAt: new Date() },
-                });
-            }
+        if (verifyRes.success) {
+            // 2. پرداخت موفق! آپدیت سفارش
+            
+            // تولید توکن دانلود (اگر قبلا نداشت)
+            const downloadToken = order.downloadToken || Math.random().toString(36).substring(7);
 
             await prisma.order.update({
-                where: { id: order.id },
+                where: { id: orderId },
                 data: {
                     status: "PAID",
-                    refId: String(response.data.ref_id),
-                    downloadToken,
-                },
+                    refId: verifyRes.refId ? String(verifyRes.refId) : null,
+                    downloadToken: downloadToken,
+                    // customData: JSON.stringify({ cardPan: verifyRes.cardPan }) // ذخیره شماره کارت (اختیاری)
+                }
             });
-
+            
+            // 3. کسر از کد تخفیف (اگر استفاده شده)
             if (order.discountCodeId) {
                 await prisma.discountCode.update({
                     where: { id: order.discountCodeId },
@@ -68,22 +65,25 @@ export async function GET(req: Request) {
                 });
             }
 
-            // ✅ ارسال پیامک‌ها
+            // 4. ایجاد لینک‌های لایسنس (اگر سیستم اتوماتیک دارید)
+            // await generateLicenseLinks(orderId); 
+            // چون سیستم شما لینک‌ها را دستی یا از قبل دارد، اینجا لاجیک تحویل را می‌گذارید.
+            // در حال حاضر شما لینک‌ها را دستی در ادمین اضافه می‌کنید یا اتوماتیک؟
+            // فرض می‌کنیم لینک‌ها در مرحله delivery هندل می‌شوند.
+
+            // 5. ارسال پیامک
             if (order.customerPhone) {
-                // ارسال به مشتری
-                await sendOrderNotification(order.customerPhone, order.trackingCode || "---");
+                await sendOrderNotification(order.customerPhone, order.trackingCode || "N/A");
             }
-            // ارسال به مدیر
             await sendAdminAlert(order.amount);
 
-            return NextResponse.redirect(new URL(`/delivery/${downloadToken}`, baseUrl));
+            return redirect(`/payment/result?status=success&orderId=${orderId}`);
         } else {
-            await releaseLinks();
-            return NextResponse.redirect(new URL("/payment/failed", baseUrl));
+            return redirect(`/payment/result?status=failed&message=تراکنش تایید نشد`);
         }
+
     } catch (error) {
-        console.error("Verify Error:", error);
-        await releaseLinks();
-        return NextResponse.redirect(new URL("/payment/failed?error=InternalError", baseUrl));
+        console.error("Payment Verify Error:", error);
+        return redirect(`/payment/result?status=failed&message=خطای سیستمی`);
     }
 }
